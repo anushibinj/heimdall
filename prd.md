@@ -99,7 +99,7 @@ Heimdall's internal state will be persisted in a local H2 database configured fo
 ### Phase 1: Foundation & Backend Core
 
 1. Initialize monorepo with `/backend` and `/frontend`.
-2. Set up Spring Boot with H2 file persistence and define JPA entities.
+2. Set up Spring Boot (using https://start.spring.io/) with H2 file persistence and define JPA entities.
 3. Implement the Strategy Pattern (`DatabaseProvider` interface).
 4. Implement `PostgresProvider` (Connection testing, OS-level `pg_dump` execution).
 
