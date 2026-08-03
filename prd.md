@@ -109,6 +109,7 @@ Heimdall's internal state will be persisted in a local H2 database configured fo
 2. Implement the deterministic hashing logic for Postgres data deduplication.
 3. Integrate Spring Quartz to trigger daily jobs based on the H2 database configurations.
 4. Implement the "Skip if checksum matches" validation flow.
+5. Add Spring Flyway to version control the application's config schema.
 
 ### Phase 3: Restoration Engine
 
