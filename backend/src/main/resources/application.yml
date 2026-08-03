@@ -9,9 +9,17 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
+  flyway:
+    enabled: true
   h2:
     console:
       enabled: true
       path: /h2-console
+
+heimdall:
+  backup:
+    timeout-millis: 300000
+    max-retry: 15
+    dump-dir: ./heimdall-data/dumps

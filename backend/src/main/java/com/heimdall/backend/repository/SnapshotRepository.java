@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface SnapshotRepository extends JpaRepository<Snapshot, UUID> {
+    Snapshot findFirstByTargetDatabaseIdOrderByCreatedAtDesc(UUID targetDatabaseId);
 }
