@@ -42,4 +42,19 @@ public interface DatabaseProvider {
      * @throws Exception if hashing or dump fails
      */
     String calculateDataChecksum(TargetDatabase database) throws Exception;
+
+    /**
+     * Terminates all active connections to the target database.
+     * @param database The target database configuration
+     * @throws Exception if termination fails
+     */
+    void terminateActiveConnections(TargetDatabase database) throws Exception;
+
+    /**
+     * Executes the restore process for the target database using the provided dump file.
+     * @param database The target database configuration
+     * @param dumpFilePath The absolute path to the dump file
+     * @throws Exception if restore fails
+     */
+    void executeRestore(TargetDatabase database, String dumpFilePath) throws Exception;
 }

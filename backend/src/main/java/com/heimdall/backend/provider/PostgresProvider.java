@@ -118,4 +118,41 @@ public class PostgresProvider implements DatabaseProvider {
         }
         return sb.toString();
     }
+
+    @Override
+    public void terminateActiveConnections(TargetDatabase database) throws Exception {
+        // Connect to 'postgres' database to safely terminate connections on target database
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%d/postgres", 
+                database.getHost(), database.getPort());
+        
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, database.getUsername(), database.getPassword())) {
+            try (var stmt = conn.prepareStatement(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ? AND pid <> pg_backend_pid()")) {
+                stmt.setString(1, database.getDbName());
+                stmt.execute();
+            }
+        }
+    }
+
+    @Override
+    public void executeRestore(TargetDatabase database, String dumpFilePath) throws Exception {
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                "pg_restore",
+                "--clean",
+                "--if-exists",
+                "-h", database.getHost(),
+                "-p", String.valueOf(database.getPort()),
+                "-U", database.getUsername(),
+                "-d", database.getDbName(),
+                dumpFilePath
+        );
+        processBuilder.environment().put("PGPASSWORD", database.getPassword());
+
+        Process process = processBuilder.start();
+        int exitCode = process.waitFor();
+        
+        if (exitCode != 0) {
+            throw new RuntimeException("pg_restore failed with exit code: " + exitCode);
+        }
+    }
 }
