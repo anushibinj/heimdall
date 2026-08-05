@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/snapshots")
-@CrossOrigin(origins = "*")
 public class SnapshotController {
 
     @Autowired

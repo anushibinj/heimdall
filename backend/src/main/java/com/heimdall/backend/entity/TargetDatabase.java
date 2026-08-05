@@ -2,6 +2,7 @@ package com.heimdall.backend.entity;
 
 import jakarta.persistence.*;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "target_databases")
@@ -29,7 +30,9 @@ public class TargetDatabase {
     @Column(nullable = false)
     private String username;
 
+    @Convert(converter = StringCryptoConverter.class)
     @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(name = "cron_schedule", nullable = false)

@@ -14,7 +14,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/databases")
-@CrossOrigin(origins = "*")
 public class TargetDatabaseController {
 
     @Autowired

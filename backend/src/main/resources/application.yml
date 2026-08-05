@@ -9,7 +9,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
   flyway:
     enabled: true
@@ -19,7 +19,12 @@ spring:
       path: /h2-console
 
 heimdall:
+  encryption:
+    secret-key: ${HEIMDALL_SECRET_KEY:ThisIsADefaultSecretKeyForDevEnv}
+  snapshot:
+    retention-days: 30
   backup:
     timeout-millis: 300000
     max-retry: 15
     dump-dir: ./heimdall-data/dumps
+    process-timeout-minutes: 60

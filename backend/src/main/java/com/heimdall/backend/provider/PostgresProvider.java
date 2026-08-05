@@ -5,12 +5,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
 public class PostgresProvider implements DatabaseProvider {
+
+    @Value("${heimdall.backup.process-timeout-minutes:60}")
+    private long processTimeoutMinutes;
 
     @Override
     public boolean supports(String engine) {
@@ -43,10 +50,18 @@ public class PostgresProvider implements DatabaseProvider {
         processBuilder.environment().put("PGPASSWORD", database.getPassword());
         
         Process process = processBuilder.start();
-        int exitCode = process.waitFor();
         
+        boolean finished = process.waitFor(processTimeoutMinutes, TimeUnit.MINUTES);
+        if (!finished) {
+            process.destroyForcibly();
+            throw new RuntimeException("pg_dump process timed out after " + processTimeoutMinutes + " minutes");
+        }
+        
+        int exitCode = process.exitValue();
         if (exitCode != 0) {
-            throw new RuntimeException("pg_dump failed with exit code: " + exitCode);
+            String errorOutput = new BufferedReader(new InputStreamReader(process.getErrorStream()))
+                    .lines().collect(Collectors.joining("\n"));
+            throw new RuntimeException("pg_dump failed with exit code: " + exitCode + ". Error: " + errorOutput);
         }
     }
 
@@ -106,9 +121,17 @@ public class PostgresProvider implements DatabaseProvider {
             }
         }
         
-        int exitCode = process.waitFor();
+        boolean finished = process.waitFor(processTimeoutMinutes, TimeUnit.MINUTES);
+        if (!finished) {
+            process.destroyForcibly();
+            throw new RuntimeException("pg_dump checksum process timed out after " + processTimeoutMinutes + " minutes");
+        }
+
+        int exitCode = process.exitValue();
         if (exitCode != 0) {
-            throw new RuntimeException("pg_dump for checksum failed with exit code: " + exitCode);
+            String errorOutput = new BufferedReader(new InputStreamReader(process.getErrorStream()))
+                    .lines().collect(Collectors.joining("\n"));
+            throw new RuntimeException("pg_dump for checksum failed with exit code: " + exitCode + ". Error: " + errorOutput);
         }
 
         byte[] hashBytes = digest.digest();
@@ -149,10 +172,18 @@ public class PostgresProvider implements DatabaseProvider {
         processBuilder.environment().put("PGPASSWORD", database.getPassword());
 
         Process process = processBuilder.start();
-        int exitCode = process.waitFor();
         
+        boolean finished = process.waitFor(processTimeoutMinutes, TimeUnit.MINUTES);
+        if (!finished) {
+            process.destroyForcibly();
+            throw new RuntimeException("pg_restore process timed out after " + processTimeoutMinutes + " minutes");
+        }
+        
+        int exitCode = process.exitValue();
         if (exitCode != 0) {
-            throw new RuntimeException("pg_restore failed with exit code: " + exitCode);
+            String errorOutput = new BufferedReader(new InputStreamReader(process.getErrorStream()))
+                    .lines().collect(Collectors.joining("\n"));
+            throw new RuntimeException("pg_restore failed with exit code: " + exitCode + ". Error: " + errorOutput);
         }
     }
 }
