@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:h2:file:./heimdall-test-data/config-db
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  flyway:
+    enabled: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+heimdall:
+  encryption:
+    secret-key: ${HEIMDALL_SECRET_KEY:ThisIsADefaultSecretKeyForDevEnv}
+  snapshot:
+    retention-days: 30
+  backup:
+    timeout-millis: 300000
+    max-retry: 15
+    dump-dir: ./heimdall-data/dumps
+    process-timeout-minutes: 60
