@@ -27,10 +27,10 @@ export default function SnapshotBrowser() {
   }, [id]);
 
   const handleRestore = async (snapId: string) => {
-    if (!confirm("WARNING: This will forcefully restore the database and replace all current data. Proceed?")) return;
+    if (!confirm("CRITICAL WARNING: This will forcefully restore the database and replace all current data. Proceed?")) return;
     
     setRestoring(true);
-    setMessage('Restoring... please wait.');
+    setMessage('Restoring... please wait. Do not close this page.');
     try {
       const res = await fetch(`${API_BASE_URL}/api/snapshots/${snapId}/restore`, { method: 'POST' });
       const data = await res.json();
@@ -61,57 +61,74 @@ export default function SnapshotBrowser() {
     }
   };
 
-  if (loading) return <div>Loading snapshots...</div>;
+  if (loading) return <div className="animate-fade-in" style={{ color: 'var(--color-text-secondary)' }}>Loading snapshots...</div>;
 
   return (
-    <div className="card" style={{ maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Snapshots for DB {id}</h2>
+    <div className="animate-slide-up" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <Link to="/" style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.5rem' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Back to Dashboard
+          </Link>
+          <h2>Snapshots</h2>
+        </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={() => handleTakeSnapshot(false)} className="primary" style={{ padding: '0.5rem 1rem' }}>Take Snapshot Now</button>
-          <button onClick={() => handleTakeSnapshot(true)} className="button" style={{ padding: '0.5rem 1rem', background: '#dc3545', color: 'white', border: 'none' }}>Force Snapshot Now</button>
-          <Link to="/" className="button">Back to Dashboard</Link>
+          <button onClick={() => handleTakeSnapshot(false)} className="primary">Take Snapshot</button>
+          <button onClick={() => handleTakeSnapshot(true)} className="danger">Force Snapshot</button>
         </div>
       </div>
 
       {message && (
-        <div className={`badge ${message.includes('failed') ? 'error' : 'success'}`} style={{ marginTop: '1rem', display: 'block' }}>
+        <div className={`badge ${message.toLowerCase().includes('fail') || message.toLowerCase().includes('error') ? 'error' : 'success'}`} style={{ marginBottom: '2rem', display: 'flex', padding: '0.75rem 1rem' }}>
           {message}
         </div>
       )}
 
-      {snapshots.length === 0 ? (
-        <p style={{ marginTop: '1rem' }}>No snapshots available for this database.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Checksum</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {snapshots.map(snap => (
-              <tr key={snap.id}>
-                <td>{new Date(snap.createdAt).toLocaleString()}</td>
-                <td>
-                  <span className={`badge ${snap.status.toLowerCase()}`}>{snap.status}</span>
-                </td>
-                <td><code style={{ fontSize: '0.8rem' }}>{snap.checksum || 'N/A'}</code></td>
-                <td>
-                  {snap.status === 'SUCCESS' && (
-                    <button className="primary" onClick={() => handleRestore(snap.id)} disabled={restoring}>
-                      Revert to this
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {snapshots.length === 0 ? (
+          <div style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            No snapshots available for this database yet.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ margin: 0 }}>
+              <thead>
+                <tr>
+                  <th style={{ paddingLeft: '1.5rem' }}>Date Taken (UTC)</th>
+                  <th>Status</th>
+                  <th>Checksum</th>
+                  <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshots.map(snap => (
+                  <tr key={snap.id}>
+                    <td style={{ paddingLeft: '1.5rem' }}>
+                      <span className="mono-text" style={{ background: 'transparent' }}>
+                        {new Date(snap.createdAt).toLocaleString()}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge ${snap.status.toLowerCase()}`}>{snap.status}</span>
+                    </td>
+                    <td>
+                      <code className="mono-text">{snap.checksum || 'N/A'}</code>
+                    </td>
+                    <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
+                      {snap.status === 'SUCCESS' && (
+                        <button className="button" onClick={() => handleRestore(snap.id)} disabled={restoring}>
+                          Revert
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

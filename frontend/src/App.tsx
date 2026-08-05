@@ -7,16 +7,18 @@ import './index.css';
 function App() {
   return (
     <BrowserRouter>
-      <div className="container">
-        <header className="app-header">
+      <header className="app-header">
+        <div className="header-container">
           <Link to="/" className="app-logo">Heimdall</Link>
           <nav>
-            <Link to="/add">
-              <button className="primary">Add Database</button>
+            <Link to="/add" className="button primary">
+              + Add Database
             </Link>
           </nav>
-        </header>
-        
+        </div>
+      </header>
+      
+      <div className="container animate-fade-in">
         <main>
           <Routes>
             <Route path="/" element={<Dashboard />} />

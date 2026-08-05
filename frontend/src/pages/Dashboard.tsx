@@ -37,26 +37,48 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="animate-fade-in" style={{ color: 'var(--color-text-secondary)' }}>Initializing Sentinel...</div>;
 
   return (
-    <div>
-      <h2>Target Databases</h2>
+    <div className="animate-slide-up">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2>Monitored Databases</h2>
+      </div>
+      
       {databases.length === 0 ? (
-        <p>No databases configured. Add one to get started.</p>
+        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <h3 style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>No databases are currently monitored.</h3>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>Add a database configuration to start capturing snapshots.</p>
+          <Link to="/add" className="button primary">Add Configuration</Link>
+        </div>
       ) : (
-        <div className="db-list">
-          {databases.map(db => (
-            <div key={db.id} className="card">
-              <h3>{db.name}</h3>
-              <p>Host: {db.host}:{db.port}</p>
-              <p>Database: {db.dbName}</p>
-              <p>Schedule: {db.cronSchedule}</p>
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-                <Link to={`/database/${db.id}`}>
-                  <button>View Snapshots</button>
+        <div className="db-grid">
+          {databases.map((db, index) => (
+            <div key={db.id} className="card db-card" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="db-card-header">
+                <h3 className="db-card-title">{db.name}</h3>
+                <div className="status-dot" title="Active" />
+              </div>
+              
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div className="db-meta">
+                  <strong>Target:</strong> <span>{db.dbName} <span style={{ color: 'var(--color-text-secondary)' }}>on</span> {db.host}:{db.port}</span>
+                </div>
+                <div className="db-meta">
+                  <strong>Engine:</strong> <span className="badge skipped">{db.engine}</span>
+                </div>
+                <div className="db-meta">
+                  <strong>Schedule:</strong> <span className="mono-text">{db.cronSchedule}</span>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                <Link to={`/database/${db.id}`} className="button" style={{ flex: 1 }}>
+                  View Snapshots
                 </Link>
-                <button className="danger" onClick={() => handleDelete(db.id)}>Remove</button>
+                <button className="danger" onClick={() => handleDelete(db.id)} aria-label="Remove Database" title="Remove Database">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                </button>
               </div>
             </div>
           ))}
