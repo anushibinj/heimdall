@@ -41,10 +41,12 @@ public class DatabaseSchedulingService {
         }
     }
 
-    public void triggerDatabaseBackup(TargetDatabase database) throws SchedulerException {
+    public void triggerDatabaseBackup(TargetDatabase database, boolean force) throws SchedulerException {
         JobKey jobKey = new JobKey("backupJob_" + database.getId(), "backups");
         if (scheduler.checkExists(jobKey)) {
-            scheduler.triggerJob(jobKey);
+            JobDataMap dataMap = new JobDataMap();
+            dataMap.put("isForced", force);
+            scheduler.triggerJob(jobKey, dataMap);
         } else {
             throw new SchedulerException("Job not found for database " + database.getId());
         }

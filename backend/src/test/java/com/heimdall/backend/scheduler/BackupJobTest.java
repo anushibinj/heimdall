@@ -65,8 +65,10 @@ public class BackupJobTest {
 
         JobDataMap dataMap = new JobDataMap();
         dataMap.put("databaseId", dbId.toString());
+        dataMap.put("isForced", false);
         lenient().when(context.getJobDetail()).thenReturn(jobDetail);
         lenient().when(jobDetail.getJobDataMap()).thenReturn(dataMap);
+        lenient().when(context.getMergedJobDataMap()).thenReturn(dataMap);
         lenient().when(databaseRepository.findById(dbId)).thenReturn(Optional.of(db));
         lenient().when(provider.supports("POSTGRES")).thenReturn(true);
     }

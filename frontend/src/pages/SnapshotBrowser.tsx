@@ -46,10 +46,10 @@ export default function SnapshotBrowser() {
     }
   };
 
-  const handleTakeSnapshot = async () => {
-    setMessage('Triggering snapshot... please wait.');
+  const handleTakeSnapshot = async (force: boolean = false) => {
+    setMessage(`Triggering snapshot${force ? ' (forced)' : ''}... please wait.`);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases/${id}/snapshot`, { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/databases/${id}/snapshot?force=${force}`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage('Snapshot triggered successfully! It will run in the background.');
@@ -68,7 +68,8 @@ export default function SnapshotBrowser() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Snapshots for DB {id}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={handleTakeSnapshot} className="primary" style={{ padding: '0.5rem 1rem' }}>Take Snapshot Now</button>
+          <button onClick={() => handleTakeSnapshot(false)} className="primary" style={{ padding: '0.5rem 1rem' }}>Take Snapshot Now</button>
+          <button onClick={() => handleTakeSnapshot(true)} className="button" style={{ padding: '0.5rem 1rem', background: '#dc3545', color: 'white', border: 'none' }}>Force Snapshot Now</button>
           <Link to="/" className="button">Back to Dashboard</Link>
         </div>
       </div>

@@ -63,11 +63,11 @@ public class TargetDatabaseController {
     }
 
     @PostMapping("/{id}/snapshot")
-    public ResponseEntity<?> triggerSnapshot(@PathVariable UUID id) {
+    public ResponseEntity<?> triggerSnapshot(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean force) {
         Optional<TargetDatabase> db = repository.findById(id);
         if (db.isPresent()) {
             try {
-                schedulingService.triggerDatabaseBackup(db.get());
+                schedulingService.triggerDatabaseBackup(db.get(), force);
                 return ResponseEntity.ok().body("{\"success\":true}");
             } catch (Exception e) {
                 return ResponseEntity.internalServerError().body("{\"success\":false, \"message\":\"Failed to trigger backup: " + e.getMessage() + "\"}");

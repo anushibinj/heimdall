@@ -1,3 +1,3 @@
 - [ ] Show logs when a backup or restore is in progress
 - [ ] Polish the frontend
-- [ ] Force snapshot now: add a "Force snapshot now" button that will run a backup even if there are active connections to the database.
+- [x] Force snapshot now: add a "Force snapshot now" button that will run a backup even if there are active connections to the database.

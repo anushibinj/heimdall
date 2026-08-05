@@ -57,9 +57,13 @@ public class BackupJob implements Job {
         newSnapshot.setTargetDatabase(db);
         newSnapshot.setCreatedAt(LocalDateTime.now());
         
+        boolean isForced = context.getMergedJobDataMap().getBooleanValue("isForced");
+
         try {
             // 1. Wait for zero connections
-            provider.waitForZeroConnections(db, timeoutMillis);
+            if (!isForced) {
+                provider.waitForZeroConnections(db, timeoutMillis);
+            }
 
             // 2. Checksum validation
             String newChecksum = provider.calculateDataChecksum(db);
