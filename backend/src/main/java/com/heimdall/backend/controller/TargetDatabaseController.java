@@ -62,6 +62,20 @@ public class TargetDatabaseController {
         return ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/{id}/snapshot")
+    public ResponseEntity<?> triggerSnapshot(@PathVariable UUID id) {
+        Optional<TargetDatabase> db = repository.findById(id);
+        if (db.isPresent()) {
+            try {
+                schedulingService.triggerDatabaseBackup(db.get());
+                return ResponseEntity.ok().body("{\"success\":true}");
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body("{\"success\":false, \"message\":\"Failed to trigger backup: " + e.getMessage() + "\"}");
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping("/test")
     public ResponseEntity<?> testConnection(@RequestBody TargetDatabase database) {
         try {

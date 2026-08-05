@@ -37,22 +37,40 @@ export default function SnapshotBrowser() {
       if (res.ok && data.success) {
         setMessage('Restore completed successfully!');
       } else {
-        setMessage('Restore failed: ' + (data.message || 'Unknown error'));
+        setMessage('Restore failed.');
       }
-    } catch (err: any) {
-      setMessage('Restore failed: ' + err.message);
+    } catch (e) {
+      setMessage('Error during restore.');
     } finally {
       setRestoring(false);
+    }
+  };
+
+  const handleTakeSnapshot = async () => {
+    setMessage('Triggering snapshot... please wait.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/databases/${id}/snapshot`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage('Snapshot triggered successfully! It will run in the background.');
+      } else {
+        setMessage('Failed to trigger snapshot.');
+      }
+    } catch (e) {
+      setMessage('Error triggering snapshot.');
     }
   };
 
   if (loading) return <div>Loading snapshots...</div>;
 
   return (
-    <div className="card">
+    <div className="card" style={{ maxWidth: 800, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Snapshot History</h2>
-        <Link to="/"><button>Back to Dashboard</button></Link>
+        <h2>Snapshots for DB {id}</h2>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button onClick={handleTakeSnapshot} className="primary" style={{ padding: '0.5rem 1rem' }}>Take Snapshot Now</button>
+          <Link to="/" className="button">Back to Dashboard</Link>
+        </div>
       </div>
 
       {message && (

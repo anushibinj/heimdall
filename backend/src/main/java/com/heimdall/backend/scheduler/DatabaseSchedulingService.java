@@ -40,4 +40,13 @@ public class DatabaseSchedulingService {
             scheduler.deleteJob(jobKey);
         }
     }
+
+    public void triggerDatabaseBackup(TargetDatabase database) throws SchedulerException {
+        JobKey jobKey = new JobKey("backupJob_" + database.getId(), "backups");
+        if (scheduler.checkExists(jobKey)) {
+            scheduler.triggerJob(jobKey);
+        } else {
+            throw new SchedulerException("Job not found for database " + database.getId());
+        }
+    }
 }
