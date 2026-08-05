@@ -3,13 +3,33 @@ package com.heimdall.backend.scheduler;
 import com.heimdall.backend.entity.TargetDatabase;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import com.heimdall.backend.repository.TargetDatabaseRepository;
+import java.util.List;
 
 @Service
 public class DatabaseSchedulingService {
 
     @Autowired
     private Scheduler scheduler;
+
+    @Autowired
+    private TargetDatabaseRepository repository;
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void scheduleAllOnStartup() {
+        List<TargetDatabase> databases = repository.findAll();
+        for (TargetDatabase db : databases) {
+            try {
+                scheduleDatabaseBackup(db);
+            } catch (SchedulerException e) {
+                // Log and continue
+                e.printStackTrace();
+            }
+        }
+    }
 
     public void scheduleDatabaseBackup(TargetDatabase database) throws SchedulerException {
         String jobKeyStr = "backupJob_" + database.getId();
@@ -43,12 +63,12 @@ public class DatabaseSchedulingService {
 
     public void triggerDatabaseBackup(TargetDatabase database, boolean force) throws SchedulerException {
         JobKey jobKey = new JobKey("backupJob_" + database.getId(), "backups");
-        if (scheduler.checkExists(jobKey)) {
-            JobDataMap dataMap = new JobDataMap();
-            dataMap.put("isForced", force);
-            scheduler.triggerJob(jobKey, dataMap);
-        } else {
-            throw new SchedulerException("Job not found for database " + database.getId());
+        if (!scheduler.checkExists(jobKey)) {
+            scheduleDatabaseBackup(database);
         }
+        
+        JobDataMap dataMap = new JobDataMap();
+        dataMap.put("isForced", force);
+        scheduler.triggerJob(jobKey, dataMap);
     }
 }
