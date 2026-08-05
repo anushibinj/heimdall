@@ -3,6 +3,8 @@ package com.heimdall.backend.provider;
 import com.heimdall.backend.entity.TargetDatabase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.BufferedReader;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class PostgresProvider implements DatabaseProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(PostgresProvider.class);
 
     @Value("${heimdall.backup.process-timeout-minutes:60}")
     private long processTimeoutMinutes;
@@ -37,6 +41,7 @@ public class PostgresProvider implements DatabaseProvider {
 
     @Override
     public void executeBackup(TargetDatabase database, String backupFilePath) throws Exception {
+        log.info("Executing pg_dump for database {} to {}", database.getDbName(), backupFilePath);
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "pg_dump",
                 "-h", database.getHost(),
@@ -63,6 +68,7 @@ public class PostgresProvider implements DatabaseProvider {
                     .lines().collect(Collectors.joining("\n"));
             throw new RuntimeException("pg_dump failed with exit code: " + exitCode + ". Error: " + errorOutput);
         }
+        log.info("Successfully executed pg_dump for database {}", database.getDbName());
     }
 
     @Value("${heimdall.backup.max-retry:10}")
@@ -70,6 +76,7 @@ public class PostgresProvider implements DatabaseProvider {
 
     @Override
     public void waitForZeroConnections(TargetDatabase database, long timeoutMillis) throws Exception {
+        log.info("Waiting for zero connections on database {} (Timeout: {} ms)", database.getDbName(), timeoutMillis);
         String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", 
                 database.getHost(), database.getPort(), database.getDbName());
         
@@ -87,7 +94,10 @@ public class PostgresProvider implements DatabaseProvider {
                         if (rs.next()) {
                             int count = rs.getInt(1);
                             if (count == 0) {
+                                log.info("Zero connections reached for database {}", database.getDbName());
                                 return; // Success, zero connections
+                            } else {
+                                log.info("Database {} currently has {} active connection(s)...", database.getDbName(), count);
                             }
                         }
                     }
@@ -100,6 +110,7 @@ public class PostgresProvider implements DatabaseProvider {
 
     @Override
     public String calculateDataChecksum(TargetDatabase database) throws Exception {
+        log.info("Calculating data checksum for database {}", database.getDbName());
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "pg_dump",
                 "-h", database.getHost(),
@@ -139,11 +150,14 @@ public class PostgresProvider implements DatabaseProvider {
         for (byte b : hashBytes) {
             sb.append(String.format("%02x", b));
         }
-        return sb.toString();
+        String checksum = sb.toString();
+        log.info("Calculated checksum for database {}: {}", database.getDbName(), checksum);
+        return checksum;
     }
 
     @Override
     public void terminateActiveConnections(TargetDatabase database) throws Exception {
+        log.info("Executing pg_terminate_backend on database {}", database.getDbName());
         // Connect to 'postgres' database to safely terminate connections on target database
         String jdbcUrl = String.format("jdbc:postgresql://%s:%d/postgres", 
                 database.getHost(), database.getPort());
@@ -159,6 +173,7 @@ public class PostgresProvider implements DatabaseProvider {
 
     @Override
     public void executeRestore(TargetDatabase database, String dumpFilePath) throws Exception {
+        log.info("Executing pg_restore for database {} from {}", database.getDbName(), dumpFilePath);
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "pg_restore",
                 "--clean",
@@ -185,5 +200,6 @@ public class PostgresProvider implements DatabaseProvider {
                     .lines().collect(Collectors.joining("\n"));
             throw new RuntimeException("pg_restore failed with exit code: " + exitCode + ". Error: " + errorOutput);
         }
+        log.info("Successfully executed pg_restore for database {}", database.getDbName());
     }
 }

@@ -11,6 +11,8 @@ import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -19,6 +21,8 @@ import java.util.UUID;
 
 @Component
 public class BackupJob implements Job {
+
+    private static final Logger log = LoggerFactory.getLogger(BackupJob.class);
 
     @Autowired
     private TargetDatabaseRepository databaseRepository;
@@ -70,6 +74,7 @@ public class BackupJob implements Job {
             Snapshot latestSnapshot = snapshotRepository.findFirstByTargetDatabaseIdOrderByCreatedAtDesc(db.getId());
             
             if (latestSnapshot != null && "SUCCESS".equals(latestSnapshot.getStatus()) && newChecksum.equals(latestSnapshot.getChecksum())) {
+                log.info("Skipping backup for database {}: Data checksum matches the latest snapshot", db.getName());
                 newSnapshot.setStatus("SKIPPED");
                 newSnapshot.setChecksum(newChecksum);
                 newSnapshot.setFilePath("");
@@ -77,6 +82,7 @@ public class BackupJob implements Job {
                 return; // Skip backup
             }
 
+            log.info("Starting backup for database {} (ID: {})", db.getName(), db.getId());
             // 3. Execute Backup
             File dir = new File(dumpDir, db.getId().toString());
             if (!dir.exists()) {
@@ -87,6 +93,8 @@ public class BackupJob implements Job {
             String backupFilePath = backupFile.getAbsolutePath();
 
             provider.executeBackup(db, backupFilePath);
+
+            log.info("Successfully completed backup for database {}. File: {}", db.getName(), backupFilePath);
 
             newSnapshot.setStatus("SUCCESS");
             newSnapshot.setChecksum(newChecksum);
@@ -99,6 +107,9 @@ public class BackupJob implements Job {
             newSnapshot.setFilePath("");
             if (e.getMessage() != null && e.getMessage().contains("Timeout waiting for zero connections")) {
                 newSnapshot.setStatus("TIMEOUT");
+                log.error("Backup timed out for database {}", db.getName(), e);
+            } else {
+                log.error("Backup failed for database {}", db.getName(), e);
             }
             snapshotRepository.save(newSnapshot);
             throw new JobExecutionException("Backup failed for database: " + db.getName(), e);
