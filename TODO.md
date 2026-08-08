@@ -8,3 +8,4 @@
 - [ ] Test snapshot restore functionality
 - [ ] In the snapshot history in the frontend, also add a button to show the detailed log of why a snapshot failed or got skipped.
 - [ ] Add edit option to existing backup job config so that we can update IP/username/password, etc.
+- [ ] Make the Docker build / compose use the host machine's gradle cache
