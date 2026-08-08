@@ -198,7 +198,11 @@ public class PostgresProvider implements DatabaseProvider {
         if (exitCode != 0) {
             String errorOutput = new BufferedReader(new InputStreamReader(process.getErrorStream()))
                     .lines().collect(Collectors.joining("\n"));
-            throw new RuntimeException("pg_restore failed with exit code: " + exitCode + ". Error: " + errorOutput);
+            if (exitCode == 1 && errorOutput.contains("errors ignored on restore")) {
+                log.warn("pg_restore completed with warnings (errors ignored): {}", errorOutput);
+            } else {
+                throw new RuntimeException("pg_restore failed with exit code: " + exitCode + ". Error: " + errorOutput);
+            }
         }
         log.info("Successfully executed pg_restore for database {}", database.getDbName());
     }

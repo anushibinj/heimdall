@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM amazoncorretto:17-alpine AS builder
+FROM amazoncorretto:17 AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN chmod +x gradlew
 COPY src src
 
 # Build the application (excluding tests as we can run them outside docker during CI/CD)
-RUN ./gradlew bootJar -x test --no-daemon
+RUN ./gradlew bootJar -x test --no-daemon --refresh-dependencies
 
 # Stage 2: Create the runtime image
 FROM amazoncorretto:17-alpine
