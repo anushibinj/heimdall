@@ -3,7 +3,7 @@
 - [ ] When a backup job is in progress, show some kind of progress like "Backing up" and update it once the backup is complete. Similarly for restores.
 - [x] Force snapshot now: add a "Force snapshot now" button that will run a backup even if there are active connections to the database.
 - [x] Containerize the entire application. Install pg_dump inside the container.
-- [ ] Add a README file with dev setup instructions for the application so that users can set this up locally and run. Add a separate pre-requisite sub section that explains installation of native host binaries like pg_dump.
+- [x] Add a README file with dev setup instructions for the application so that users can set this up locally and run. Add a separate pre-requisite sub section that explains installation of native host binaries like pg_dump.
 - [ ] Add support for mongodb backups
 - [x] Test snapshot restore functionality
 - [ ] Add a compose file for the Docker test-db as well
