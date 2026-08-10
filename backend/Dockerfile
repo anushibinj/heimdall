@@ -1,5 +1,7 @@
 # Stage 1: Build the application
-FROM amazoncorretto:17 AS builder
+FROM amazoncorretto:17-alpine AS builder
+
+RUN apk add --no-cache findutils
 
 WORKDIR /app
 
