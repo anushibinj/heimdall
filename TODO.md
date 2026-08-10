@@ -7,7 +7,7 @@
 - [ ] Add support for mongodb backups
 - [x] Test snapshot restore functionality
 - [ ] Add a compose file for the Docker test-db as well
-- [ ] In the snapshot history in the frontend, also add a button to show the detailed log of why a snapshot failed or got skipped. Even in the case of a successful backup, store the log of the STDOUT for future reference.
+- [x] In the snapshot history in the frontend, also add a button to show the detailed log of why a snapshot failed or got skipped. Even in the case of a successful backup, store the log of the STDOUT for future reference.
 - [ ] Add edit option to existing backup job config so that we can update IP/username/password, etc.
 - [ ] Make the Docker build / compose use the host machine's gradle cache
 - [ ] Add RBAC (Role Based Access Control) to the application. Use OAuth based authentication (using Google Sign In). Add different roles like Admin, Editor, Viewer, etc.

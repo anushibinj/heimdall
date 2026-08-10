@@ -100,7 +100,7 @@ public class BackupJob implements Job {
             File backupFile = new File(dir, fileName);
             String backupFilePath = backupFile.getAbsolutePath();
 
-            provider.executeBackup(db, backupFilePath);
+            String logOutput = provider.executeBackup(db, backupFilePath);
 
             log.info("Successfully completed backup for database {}. File: {}", db.getName(), backupFilePath);
 
@@ -108,6 +108,7 @@ public class BackupJob implements Job {
             newSnapshot.setChecksum(newChecksum);
             newSnapshot.setFilePath(backupFilePath);
             newSnapshot.setFileSizeBytes(backupFile.length());
+            newSnapshot.setLogOutput(logOutput);
             snapshotRepository.save(newSnapshot);
 
             sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "COMPLETED", "Backup successful"));
@@ -115,6 +116,11 @@ public class BackupJob implements Job {
         } catch (Exception e) {
             newSnapshot.setStatus("FAILED");
             newSnapshot.setFilePath("");
+            
+            java.io.StringWriter sw = new java.io.StringWriter();
+            e.printStackTrace(new java.io.PrintWriter(sw));
+            newSnapshot.setLogOutput(sw.toString());
+            
             if (e.getMessage() != null && e.getMessage().contains("Timeout waiting for zero connections")) {
                 newSnapshot.setStatus("TIMEOUT");
                 log.error("Backup timed out for database {}", db.getName(), e);

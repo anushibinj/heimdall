@@ -23,9 +23,10 @@ public interface DatabaseProvider {
      * Executes the backup for the target database.
      * @param database The target database configuration
      * @param backupFilePath The destination path for the dump file
+     * @return The log output of the backup process
      * @throws Exception if backup fails
      */
-    void executeBackup(TargetDatabase database, String backupFilePath) throws Exception;
+    String executeBackup(TargetDatabase database, String backupFilePath) throws Exception;
 
     /**
      * Polls the database until there are zero active connections or a timeout is reached.

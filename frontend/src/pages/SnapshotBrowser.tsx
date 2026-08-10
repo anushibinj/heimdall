@@ -18,6 +18,10 @@ export default function SnapshotBrowser() {
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState('');
   
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [selectedLog, setSelectedLog] = useState('');
+  const [logLoading, setLogLoading] = useState(false);
+  
   const activeJob = useJobProgress(id) as JobProgress | null;
   const prevActiveJobRef = useRef<JobProgress | null>(null);
 
@@ -76,6 +80,25 @@ export default function SnapshotBrowser() {
       }
     } catch (e) {
       setMessage('Error triggering snapshot.');
+    }
+  };
+
+  const handleViewLog = async (snapId: string) => {
+    setLogModalOpen(true);
+    setLogLoading(true);
+    setSelectedLog('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/snapshots/${snapId}/log`);
+      if (res.ok) {
+        const text = await res.text();
+        setSelectedLog(text);
+      } else {
+        setSelectedLog('Failed to load logs.');
+      }
+    } catch (e) {
+      setSelectedLog('Error loading logs.');
+    } finally {
+      setLogLoading(false);
     }
   };
 
@@ -147,9 +170,12 @@ export default function SnapshotBrowser() {
                     <td>
                       <code className="mono-text">{snap.checksum || 'N/A'}</code>
                     </td>
-                    <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
+                    <td style={{ paddingRight: '1.5rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button className="button" onClick={() => handleViewLog(snap.id)} style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}>
+                        View Log
+                      </button>
                       {snap.status === 'SUCCESS' && (
-                        <button className="button" onClick={() => handleRestore(snap.id)} disabled={restoring || isJobActive}>
+                        <button className="button" onClick={() => handleRestore(snap.id)} disabled={restoring || isJobActive} style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}>
                           Revert
                         </button>
                       )}
@@ -161,6 +187,26 @@ export default function SnapshotBrowser() {
           </div>
         )}
       </div>
+
+      {logModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div className="card animate-slide-up" style={{ width: '80%', maxWidth: '900px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Snapshot Log</h3>
+              <button onClick={() => setLogModalOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '0.25rem' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            {logLoading ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Loading logs...</div>
+            ) : (
+              <pre style={{ flex: 1, overflowY: 'auto', background: 'var(--color-surface-hover)', padding: '1rem', borderRadius: '4px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.875rem' }}>
+                {selectedLog || 'No log output available.'}
+              </pre>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

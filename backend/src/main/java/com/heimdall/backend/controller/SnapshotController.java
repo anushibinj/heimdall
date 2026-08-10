@@ -40,4 +40,14 @@ public class SnapshotController {
             return ResponseEntity.internalServerError().body("{\"success\":false, \"message\":\"" + e.getMessage() + "\"}");
         }
     }
+
+    @GetMapping("/{id}/log")
+    public ResponseEntity<String> getSnapshotLog(@PathVariable UUID id) {
+        Optional<Snapshot> snapshotOpt = repository.findById(id);
+        if (snapshotOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        String log = snapshotOpt.get().getLogOutput();
+        return ResponseEntity.ok().body(log == null ? "No logs available." : log);
+    }
 }

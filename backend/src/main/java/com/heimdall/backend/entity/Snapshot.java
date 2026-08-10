@@ -31,6 +31,10 @@ public class Snapshot {
     @Column(nullable = false)
     private String status; // SUCCESS, FAILED, SKIPPED, TIMEOUT
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "log_output", columnDefinition = "TEXT")
+    private String logOutput;
+
     // Getters and Setters
 
     public UUID getId() {
@@ -87,5 +91,13 @@ public class Snapshot {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getLogOutput() {
+        return logOutput;
+    }
+
+    public void setLogOutput(String logOutput) {
+        this.logOutput = logOutput;
     }
 }

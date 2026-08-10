@@ -40,7 +40,7 @@ public class PostgresProvider implements DatabaseProvider {
     }
 
     @Override
-    public void executeBackup(TargetDatabase database, String backupFilePath) throws Exception {
+    public String executeBackup(TargetDatabase database, String backupFilePath) throws Exception {
         log.info("Executing pg_dump for database {} to {}", database.getDbName(), backupFilePath);
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "pg_dump",
@@ -53,6 +53,7 @@ public class PostgresProvider implements DatabaseProvider {
         );
         
         processBuilder.environment().put("PGPASSWORD", database.getPassword());
+        processBuilder.redirectErrorStream(true);
         
         Process process = processBuilder.start();
         
@@ -62,13 +63,15 @@ public class PostgresProvider implements DatabaseProvider {
             throw new RuntimeException("pg_dump process timed out after " + processTimeoutMinutes + " minutes");
         }
         
+        String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
+                .lines().collect(Collectors.joining("\n"));
+        
         int exitCode = process.exitValue();
         if (exitCode != 0) {
-            String errorOutput = new BufferedReader(new InputStreamReader(process.getErrorStream()))
-                    .lines().collect(Collectors.joining("\n"));
-            throw new RuntimeException("pg_dump failed with exit code: " + exitCode + ". Error: " + errorOutput);
+            throw new RuntimeException("pg_dump failed with exit code: " + exitCode + ". Output:\n" + output);
         }
         log.info("Successfully executed pg_dump for database {}", database.getDbName());
+        return output;
     }
 
     @Value("${heimdall.backup.max-retry:10}")
