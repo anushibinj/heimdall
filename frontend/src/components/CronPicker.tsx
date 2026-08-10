@@ -1,13 +1,13 @@
 import React from 'react';
 
 const CRON_OPTIONS = [
-  { label: 'Every 15 minutes', value: '0 0/15 * * * ?' },
-  { label: 'Every 30 minutes', value: '0 0/30 * * * ?' },
-  { label: 'Every hour', value: '0 0 * * * ?' },
-  { label: 'Every 4 hours', value: '0 0 0/4 * * ?' },
-  { label: 'Every day (at 02:00 UTC)', value: '0 0 2 * * ?' },
-  { label: 'Every week (Sunday at 02:00 UTC)', value: '0 0 2 ? * SUN' },
-  { label: 'Every month (1st at 02:00 UTC)', value: '0 0 2 1 * ?' },
+  { label: 'Every 15 minutes', value: '*/15 * * * *' },
+  { label: 'Every 30 minutes', value: '*/30 * * * *' },
+  { label: 'Every hour', value: '0 * * * *' },
+  { label: 'Every 4 hours', value: '0 */4 * * *' },
+  { label: 'Every day (at 02:00 UTC)', value: '0 2 * * *' },
+  { label: 'Every week (Sunday at 02:00 UTC)', value: '0 2 * * SUN' },
+  { label: 'Every month (1st at 02:00 UTC)', value: '0 2 1 * *' },
   { label: 'Custom', value: 'CUSTOM' }
 ];
 

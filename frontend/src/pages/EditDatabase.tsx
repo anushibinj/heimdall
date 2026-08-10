@@ -15,7 +15,7 @@ export default function EditDatabase() {
     username: '',
     password: '',
     engine: 'POSTGRES',
-    cronSchedule: '0 0 2 * * ?'
+    cronSchedule: '0 2 * * *'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);

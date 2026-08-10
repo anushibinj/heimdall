@@ -18,4 +18,4 @@
 - [ ] Each database entry in the system should have its own "Watcher" or "Admin" set of users that are the stakeholders for that entry.
 - [ ] When RBAC is implemented, I should get an email with the log of why a backup job failed.
 - [ ] Moonshot: Make the application multi-tenant
-- [ ] Standard cron expressions look like this "5 4 \* \* \*" with 5 entities but the current application accepts 6. Why is that and can we make it look like the standardized version?
+- [x] Standard cron expressions look like this "5 4 \* \* \*" with 5 entities but the current application accepts 6. Why is that and can we make it look like the standardized version?

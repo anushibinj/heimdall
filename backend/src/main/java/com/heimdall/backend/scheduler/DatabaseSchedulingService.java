@@ -48,7 +48,7 @@ public class DatabaseSchedulingService {
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(triggerKeyStr, "backups")
-                .withSchedule(CronScheduleBuilder.cronSchedule(database.getCronSchedule()))
+                .withSchedule(CronScheduleBuilder.cronSchedule(convertToQuartzCron(database.getCronSchedule())))
                 .build();
 
         scheduler.scheduleJob(jobDetail, trigger);
@@ -70,5 +70,34 @@ public class DatabaseSchedulingService {
         JobDataMap dataMap = new JobDataMap();
         dataMap.put("isForced", force);
         scheduler.triggerJob(jobKey, dataMap);
+    }
+
+    private String convertToQuartzCron(String cron) {
+        if (cron == null || cron.trim().isEmpty()) {
+            return "0 0 2 * * ?";
+        }
+        String[] parts = cron.trim().split("\\s+");
+        if (parts.length == 5) {
+            String minute = parts[0];
+            String hour = parts[1];
+            String dayOfMonth = parts[2];
+            String month = parts[3];
+            String dayOfWeek = parts[4];
+
+            if (dayOfMonth.equals("*") && dayOfWeek.equals("*")) {
+                dayOfWeek = "?";
+            } else if (!dayOfMonth.equals("*") && dayOfWeek.equals("*")) {
+                dayOfWeek = "?";
+            } else if (dayOfMonth.equals("*") && !dayOfWeek.equals("*")) {
+                dayOfMonth = "?";
+            }
+            
+            if (dayOfWeek.equals("0") || dayOfWeek.equals("7")) {
+                dayOfWeek = "1";
+            }
+
+            return String.format("0 %s %s %s %s %s", minute, hour, dayOfMonth, month, dayOfWeek);
+        }
+        return cron;
     }
 }

@@ -13,7 +13,7 @@ export default function AddDatabase() {
     username: 'postgres',
     password: '',
     engine: 'POSTGRES',
-    cronSchedule: '0 0 2 * * ?'
+    cronSchedule: '0 2 * * *'
   });
   const [error, setError] = useState('');
   const [testing, setTesting] = useState(false);
