@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/databases")
@@ -37,6 +38,7 @@ public class TargetDatabaseController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> createDatabase(@RequestBody TargetDatabase database) {
         try {
             TargetDatabase saved = repository.save(database);
@@ -48,6 +50,7 @@ public class TargetDatabaseController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> deleteDatabase(@PathVariable UUID id) {
         Optional<TargetDatabase> db = repository.findById(id);
         if (db.isPresent()) {
@@ -63,6 +66,7 @@ public class TargetDatabaseController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> updateDatabase(@PathVariable UUID id, @RequestBody TargetDatabase databaseDetails) {
         Optional<TargetDatabase> dbOpt = repository.findById(id);
         if (dbOpt.isPresent()) {
@@ -92,6 +96,7 @@ public class TargetDatabaseController {
     }
 
     @PostMapping("/{id}/snapshot")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> triggerSnapshot(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean force) {
         Optional<TargetDatabase> db = repository.findById(id);
         if (db.isPresent()) {
@@ -106,6 +111,7 @@ public class TargetDatabaseController {
     }
 
     @PostMapping("/test")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> testConnection(@RequestBody TargetDatabase database) {
         try {
             DatabaseProvider provider = providers.stream()
@@ -125,6 +131,7 @@ public class TargetDatabaseController {
     }
 
     @PostMapping("/{id}/test")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> testExistingConnection(@PathVariable UUID id, @RequestBody TargetDatabase databaseDetails) {
         try {
             Optional<TargetDatabase> dbOpt = repository.findById(id);

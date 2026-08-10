@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/snapshots")
@@ -27,6 +28,7 @@ public class SnapshotController {
     }
 
     @PostMapping("/{id}/restore")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> restoreSnapshot(@PathVariable UUID id) {
         Optional<Snapshot> snapshotOpt = repository.findById(id);
         if (snapshotOpt.isEmpty()) {

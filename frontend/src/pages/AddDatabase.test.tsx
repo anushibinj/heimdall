@@ -3,6 +3,10 @@ import { BrowserRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import AddDatabase from './AddDatabase';
 
+jest.mock('../context/AuthContext', () => ({
+  useAuth: () => ({ user: { role: 'ADMIN', name: 'Admin' } })
+}));
+
 globalThis.fetch = jest.fn();
 
 const mockNavigate = jest.fn();

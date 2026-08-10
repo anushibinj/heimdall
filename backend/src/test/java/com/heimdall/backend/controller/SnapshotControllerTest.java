@@ -17,12 +17,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
-@WebMvcTest(SnapshotController.class)
+@SpringBootTest
 public class SnapshotControllerTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
+
+    @BeforeEach
+    public void setup() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+    }
+
+
 
     @MockitoBean
     private SnapshotRepository repository;
@@ -35,7 +54,9 @@ public class SnapshotControllerTest {
         UUID dbId = UUID.randomUUID();
         when(repository.findAllByTargetDatabaseIdOrderByCreatedAtDesc(dbId)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/snapshots").param("databaseId", dbId.toString()))
+        mockMvc.perform(get("/api/snapshots")
+                .param("databaseId", dbId.toString())
+                .with(oauth2Login().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -49,7 +70,8 @@ public class SnapshotControllerTest {
         when(repository.findById(snapId)).thenReturn(Optional.of(snap));
         doNothing().when(restorationService).restoreSnapshot(snap);
 
-        mockMvc.perform(post("/api/snapshots/" + snapId + "/restore"))
+        mockMvc.perform(post("/api/snapshots/" + snapId + "/restore")
+                .with(oauth2Login().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }

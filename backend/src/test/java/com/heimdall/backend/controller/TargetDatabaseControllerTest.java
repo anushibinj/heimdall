@@ -20,12 +20,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
-@WebMvcTest(TargetDatabaseController.class)
+@SpringBootTest
 public class TargetDatabaseControllerTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
+
+    @BeforeEach
+    public void setup() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+    }
+
+
 
     @MockitoBean
     private TargetDatabaseRepository repository;
@@ -43,7 +62,8 @@ public class TargetDatabaseControllerTest {
     void getAllDatabases_returnsList() throws Exception {
         when(repository.findAll()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/databases"))
+        mockMvc.perform(get("/api/databases")
+                .with(oauth2Login().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -58,7 +78,8 @@ public class TargetDatabaseControllerTest {
 
         mockMvc.perform(post("/api/databases")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(db)))
+                .content(objectMapper.writeValueAsString(db))
+                .with(oauth2Login().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test DB"));
     }
@@ -67,7 +88,8 @@ public class TargetDatabaseControllerTest {
     void getDatabase_returnsNotFound_whenNotExists() throws Exception {
         when(repository.findById(any())).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/databases/" + UUID.randomUUID()))
+        mockMvc.perform(get("/api/databases/" + UUID.randomUUID())
+                .with(oauth2Login().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isNotFound());
     }
 }

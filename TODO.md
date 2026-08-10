@@ -21,3 +21,4 @@
 - [x] Standard cron expressions look like this "5 4 \* \* \*" with 5 entities but the current application accepts 6. Why is that and can we make it look like the standardized version?
 - [ ] Users with the EDITOR role should be able to configure only the ones initially created by them. One EDITOR should NOT be able to edit someone else's database configuration.
 - [ ] Moonshot: Add Analytics for the configured databases. Also, figure out who should see what analytics.
+- [ ] Remove all hardcoded values for the frontend URLs in the spring boot code. Accept that value via a property in application.yml.

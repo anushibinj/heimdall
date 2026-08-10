@@ -5,6 +5,10 @@ import Dashboard from './Dashboard';
 
 globalThis.fetch = jest.fn();
 
+jest.mock('../context/AuthContext', () => ({
+  useAuth: () => ({ user: { role: 'ADMIN', name: 'Admin' } })
+}));
+
 describe('Dashboard', () => {
   beforeEach(() => {
     (globalThis.fetch as jest.Mock).mockClear();

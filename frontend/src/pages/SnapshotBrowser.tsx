@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { useJobProgress, type JobProgress } from '../hooks/useJobProgress';
+import { useAuth } from '../context/AuthContext';
 
 interface Snapshot {
   id: string;
@@ -12,6 +13,7 @@ interface Snapshot {
 }
 
 export default function SnapshotBrowser() {
+  const { user } = useAuth();
   const { id } = useParams();
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,8 +127,12 @@ export default function SnapshotBrowser() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={() => handleTakeSnapshot(false)} className="primary" disabled={isJobActive || restoring}>Take Snapshot</button>
-          <button onClick={() => handleTakeSnapshot(true)} className="danger" disabled={isJobActive || restoring}>Force Snapshot</button>
+          {(user?.role === 'ADMIN' || user?.role === 'EDITOR') && (
+            <>
+              <button onClick={() => handleTakeSnapshot(false)} className="primary" disabled={isJobActive || restoring}>Take Snapshot</button>
+              <button onClick={() => handleTakeSnapshot(true)} className="danger" disabled={isJobActive || restoring}>Force Snapshot</button>
+            </>
+          )}
         </div>
       </div>
 
@@ -174,7 +180,7 @@ export default function SnapshotBrowser() {
                       <button className="button" onClick={() => handleViewLog(snap.id)} style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}>
                         View Log
                       </button>
-                      {snap.status === 'SUCCESS' && (
+                      {(user?.role === 'ADMIN' || user?.role === 'EDITOR') && snap.status === 'SUCCESS' && (
                         <button className="button" onClick={() => handleRestore(snap.id)} disabled={restoring || isJobActive} style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}>
                           Revert
                         </button>

@@ -1,6 +1,13 @@
 spring:
   application:
     name: backend
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_OAUTH_CLIENT_ID:sample-client-id-needs-to-be-changed}
+            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:sample-client-secret-needs-to-be-changed}
   datasource:
     url: jdbc:h2:file:./heimdall-data/config-db
     driverClassName: org.h2.Driver
@@ -19,6 +26,9 @@ spring:
       path: /h2-console
 
 heimdall:
+  security:
+    admin-email: ${HEIMDALL_ADMIN_EMAIL:admin@example.com}
+    allowed-domains: ${HEIMDALL_ALLOWED_DOMAINS:}
   encryption:
     secret-key: ${HEIMDALL_SECRET_KEY:ThisIsADefaultSecretKeyForDevEnv}
   snapshot:

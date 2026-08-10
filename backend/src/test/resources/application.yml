@@ -1,6 +1,13 @@
 spring:
   application:
     name: backend
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: dummy-client-id
+            client-secret: dummy-client-secret
   datasource:
     url: jdbc:h2:file:./heimdall-test-data/config-db
     driverClassName: org.h2.Driver
@@ -19,6 +26,9 @@ spring:
       path: /h2-console
 
 heimdall:
+  security:
+    admin-email: admin@example.com
+    allowed-domains: ""
   encryption:
     secret-key: ${HEIMDALL_SECRET_KEY:ThisIsADefaultSecretKeyForDevEnv}
   snapshot:

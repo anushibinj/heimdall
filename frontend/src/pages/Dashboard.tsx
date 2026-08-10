@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { useJobProgress } from '../hooks/useJobProgress';
+import { useAuth } from '../context/AuthContext';
 
 export interface TargetDatabase {
   id: string;
@@ -15,6 +16,7 @@ export interface TargetDatabase {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [databases, setDatabases] = useState<TargetDatabase[]>([]);
   const [loading, setLoading] = useState(true);
   const activeJobs = useJobProgress() as Record<string, import('../hooks/useJobProgress').JobProgress>;
@@ -51,7 +53,9 @@ export default function Dashboard() {
         <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
           <h3 style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>No databases are currently monitored.</h3>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>Add a database configuration to start capturing snapshots.</p>
-          <Link to="/add" className="button primary">Add Configuration</Link>
+          {(user?.role === 'ADMIN' || user?.role === 'EDITOR') && (
+            <Link to="/add" className="button primary">Add Configuration</Link>
+          )}
         </div>
       ) : (
         <div className="db-grid">
@@ -88,12 +92,16 @@ export default function Dashboard() {
                 <Link to={`/database/${db.id}`} className="button" style={{ flex: 1 }}>
                   View Snapshots
                 </Link>
-                <Link to={`/edit/${db.id}`} className="button" aria-label="Edit Database" title="Edit Database" style={{ padding: '0.5rem' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                </Link>
-                <button className="danger" onClick={() => handleDelete(db.id)} aria-label="Remove Database" title="Remove Database">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                </button>
+                {(user?.role === 'ADMIN' || user?.role === 'EDITOR') && (
+                  <>
+                    <Link to={`/edit/${db.id}`} className="button" aria-label="Edit Database" title="Edit Database" style={{ padding: '0.5rem' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    </Link>
+                    <button className="danger" onClick={() => handleDelete(db.id)} aria-label="Remove Database" title="Remove Database">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             );
