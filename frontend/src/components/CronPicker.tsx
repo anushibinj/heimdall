@@ -22,7 +22,9 @@ export default function CronPicker({ value, onChange }: CronPickerProps) {
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
-    if (val !== 'CUSTOM') {
+    if (val === 'CUSTOM') {
+      onChange('');
+    } else {
       onChange(val);
     }
   };
