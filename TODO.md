@@ -17,3 +17,4 @@
 - [ ] Follow SOLID principles and reorganize all of the code to adhere to them.
 - [ ] Each database entry in the system should have its own "Watcher" or "Admin" set of users that are the stakeholders for that entry.
 - [ ] When RBAC is implemented, I should get an email with the log of why a backup job failed.
+- [ ] Moonshot: Make the application multi-tenant
