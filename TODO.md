@@ -14,3 +14,4 @@
 - [ ] Instead of cron expressions in the frontend to schedule the backup jobs, implement user friendly frequency picker. Use 'Every 15 minutes', 'Every 30 minutes', 'Every hour', 'Every 4 hours', 'Every day', 'Every week', 'Every month', 'Custom'.
 - [ ] Add a back button in the "Add Database" screen to redirect to the dashboard.
 - [ ] Currently, most of the business logic is written in the controllers. Rip all of them off and move them to the service layer instead.
+- [ ] Follow SOLID principles and reorganize all of the code to adhere to them.
