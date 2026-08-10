@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import CronPicker from '../components/CronPicker';
 
 export default function EditDatabase() {
   const navigate = useNavigate();
@@ -135,8 +136,11 @@ export default function EditDatabase() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '0' }}>
-            <label htmlFor="cronSchedule">Cron Schedule (UTC)</label>
-            <input id="cronSchedule" type="text" name="cronSchedule" value={formData.cronSchedule} onChange={handleChange} required style={{ fontFamily: 'var(--font-mono)' }} />
+            <label htmlFor="cronSchedule">Backup Frequency (UTC)</label>
+            <CronPicker 
+              value={formData.cronSchedule} 
+              onChange={(val) => setFormData({ ...formData, cronSchedule: val })} 
+            />
           </div>
 
           <div style={{ 
