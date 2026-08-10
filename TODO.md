@@ -5,7 +5,8 @@
 - [x] Containerize the entire application. Install pg_dump inside the container.
 - [ ] Add a README file with dev setup instructions for the application so that users can set this up locally and run. Add a separate pre-requisite sub section that explains installation of native host binaries like pg_dump.
 - [ ] Add support for mongodb backups
-- [ ] Test snapshot restore functionality
+- [x] Test snapshot restore functionality
+- [ ] Add a compose file for the Docker test-db as well
 - [ ] In the snapshot history in the frontend, also add a button to show the detailed log of why a snapshot failed or got skipped.
 - [ ] Add edit option to existing backup job config so that we can update IP/username/password, etc.
 - [ ] Make the Docker build / compose use the host machine's gradle cache
