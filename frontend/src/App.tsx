@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import AddDatabase from './pages/AddDatabase';
+import EditDatabase from './pages/EditDatabase';
 import SnapshotBrowser from './pages/SnapshotBrowser';
 import './index.css';
 
@@ -23,6 +24,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/add" element={<AddDatabase />} />
+            <Route path="/edit/:id" element={<EditDatabase />} />
             <Route path="/database/:id" element={<SnapshotBrowser />} />
           </Routes>
         </main>

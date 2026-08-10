@@ -62,6 +62,35 @@ public class TargetDatabaseController {
         return ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateDatabase(@PathVariable UUID id, @RequestBody TargetDatabase databaseDetails) {
+        Optional<TargetDatabase> dbOpt = repository.findById(id);
+        if (dbOpt.isPresent()) {
+            TargetDatabase db = dbOpt.get();
+            db.setName(databaseDetails.getName());
+            db.setEngine(databaseDetails.getEngine());
+            db.setHost(databaseDetails.getHost());
+            db.setPort(databaseDetails.getPort());
+            db.setDbName(databaseDetails.getDbName());
+            db.setUsername(databaseDetails.getUsername());
+            
+            if (databaseDetails.getPassword() != null && !databaseDetails.getPassword().trim().isEmpty()) {
+                db.setPassword(databaseDetails.getPassword());
+            }
+            
+            db.setCronSchedule(databaseDetails.getCronSchedule());
+            
+            try {
+                TargetDatabase updated = repository.save(db);
+                schedulingService.scheduleDatabaseBackup(updated);
+                return ResponseEntity.ok(updated);
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body("Failed to update database: " + e.getMessage());
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping("/{id}/snapshot")
     public ResponseEntity<?> triggerSnapshot(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean force) {
         Optional<TargetDatabase> db = repository.findById(id);
