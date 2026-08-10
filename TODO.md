@@ -15,3 +15,5 @@
 - [ ] Add a back button in the "Add Database" screen to redirect to the dashboard.
 - [ ] Currently, most of the business logic is written in the controllers. Rip all of them off and move them to the service layer instead.
 - [ ] Follow SOLID principles and reorganize all of the code to adhere to them.
+- [ ] Each database entry in the system should have its own "Watcher" or "Admin" set of users that are the stakeholders for that entry.
+- [ ] When RBAC is implemented, I should get an email with the log of why a backup job failed.
