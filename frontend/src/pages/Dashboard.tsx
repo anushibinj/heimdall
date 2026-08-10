@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import { useJobProgress } from '../hooks/useJobProgress';
 
 export interface TargetDatabase {
   id: string;
@@ -16,6 +17,7 @@ export interface TargetDatabase {
 export default function Dashboard() {
   const [databases, setDatabases] = useState<TargetDatabase[]>([]);
   const [loading, setLoading] = useState(true);
+  const activeJobs = useJobProgress() as Record<string, import('../hooks/useJobProgress').JobProgress>;
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/databases`)
@@ -53,10 +55,20 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="db-grid">
-          {databases.map((db, index) => (
+          {databases.map((db, index) => {
+            const activeJob = activeJobs[db.id];
+            
+            return (
             <div key={db.id} className="card db-card" style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="db-card-header">
-                <h3 className="db-card-title">{db.name}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h3 className="db-card-title">{db.name}</h3>
+                  {activeJob && (
+                    <span className="badge warning" style={{ animation: 'pulse 2s infinite' }}>
+                      {activeJob.jobType === 'BACKUP' ? 'Backing up...' : 'Restoring...'}
+                    </span>
+                  )}
+                </div>
                 <div className="status-dot" title="Active" />
               </div>
               
@@ -81,7 +93,8 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,10 +1,12 @@
 package com.heimdall.backend.scheduler;
 
+import com.heimdall.backend.dto.JobProgressEvent;
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.entity.TargetDatabase;
 import com.heimdall.backend.provider.DatabaseProvider;
 import com.heimdall.backend.repository.SnapshotRepository;
 import com.heimdall.backend.repository.TargetDatabaseRepository;
+import com.heimdall.backend.service.SseService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -29,6 +31,9 @@ public class BackupJob implements Job {
 
     @Autowired
     private SnapshotRepository snapshotRepository;
+
+    @Autowired
+    private SseService sseService;
 
     @Autowired
     private List<DatabaseProvider> providers;
@@ -64,6 +69,8 @@ public class BackupJob implements Job {
         boolean isForced = context.getMergedJobDataMap().getBooleanValue("isForced");
 
         try {
+            sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "IN_PROGRESS", "Preparing backup..."));
+            
             // 1. Wait for zero connections
             if (!isForced) {
                 provider.waitForZeroConnections(db, timeoutMillis);
@@ -79,6 +86,7 @@ public class BackupJob implements Job {
                 newSnapshot.setChecksum(newChecksum);
                 newSnapshot.setFilePath("");
                 snapshotRepository.save(newSnapshot);
+                sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "COMPLETED", "Skipped: Checksum matches"));
                 return; // Skip backup
             }
 
@@ -102,14 +110,18 @@ public class BackupJob implements Job {
             newSnapshot.setFileSizeBytes(backupFile.length());
             snapshotRepository.save(newSnapshot);
 
+            sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "COMPLETED", "Backup successful"));
+
         } catch (Exception e) {
             newSnapshot.setStatus("FAILED");
             newSnapshot.setFilePath("");
             if (e.getMessage() != null && e.getMessage().contains("Timeout waiting for zero connections")) {
                 newSnapshot.setStatus("TIMEOUT");
                 log.error("Backup timed out for database {}", db.getName(), e);
+                sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "FAILED", "Backup timed out"));
             } else {
                 log.error("Backup failed for database {}", db.getName(), e);
+                sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "FAILED", "Backup failed: " + e.getMessage()));
             }
             snapshotRepository.save(newSnapshot);
             throw new JobExecutionException("Backup failed for database: " + db.getName(), e);

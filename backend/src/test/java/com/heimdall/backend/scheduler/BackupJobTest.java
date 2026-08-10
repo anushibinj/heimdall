@@ -5,6 +5,7 @@ import com.heimdall.backend.entity.TargetDatabase;
 import com.heimdall.backend.provider.DatabaseProvider;
 import com.heimdall.backend.repository.SnapshotRepository;
 import com.heimdall.backend.repository.TargetDatabaseRepository;
+import com.heimdall.backend.service.SseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +39,9 @@ public class BackupJobTest {
 
     @Mock
     private DatabaseProvider provider;
+
+    @Mock
+    private SseService sseService;
 
     @Mock
     private JobExecutionContext context;

@@ -3,6 +3,7 @@ package com.heimdall.backend.service;
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.entity.TargetDatabase;
 import com.heimdall.backend.provider.DatabaseProvider;
+import com.heimdall.backend.service.SseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,9 @@ public class RestorationServiceTest {
 
     @Mock
     private DatabaseProvider provider;
+
+    @Mock
+    private SseService sseService;
 
     @InjectMocks
     private RestorationService restorationService;

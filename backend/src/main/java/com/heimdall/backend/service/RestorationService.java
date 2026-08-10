@@ -1,8 +1,10 @@
 package com.heimdall.backend.service;
 
+import com.heimdall.backend.dto.JobProgressEvent;
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.entity.TargetDatabase;
 import com.heimdall.backend.provider.DatabaseProvider;
+import com.heimdall.backend.service.SseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,9 @@ public class RestorationService {
     @Autowired
     private List<DatabaseProvider> providers;
 
+    @Autowired
+    private SseService sseService;
+
     @Value("${heimdall.backup.dump-dir:./heimdall-data/dumps}")
     private String dumpDir;
 
@@ -30,6 +35,8 @@ public class RestorationService {
                 .filter(p -> p.supports(db.getEngine()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No provider found for engine: " + db.getEngine()));
+
+        sseService.sendEvent(new JobProgressEvent(db.getId(), "RESTORE", "IN_PROGRESS", "Preparing restore..."));
 
         // 1. Create a temporary safety backup (rollback net)
         File rollbackDir = new File(dumpDir, db.getId().toString());
@@ -54,7 +61,9 @@ public class RestorationService {
 
             // 4. Keep rollback safety backup on success for future reference
             log.info("Restore successful. Keeping rollback backup for reference: {}", rollbackFilePath);
+            sseService.sendEvent(new JobProgressEvent(db.getId(), "RESTORE", "COMPLETED", "Restore successful"));
         } catch (Exception e) {
+            sseService.sendEvent(new JobProgressEvent(db.getId(), "RESTORE", "FAILED", "Restore failed: " + e.getMessage()));
             log.error("Restore failed. Triggering rollback using safety backup...", e);
             try {
                 provider.terminateActiveConnections(db);

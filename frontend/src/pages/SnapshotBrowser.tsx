@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import { useJobProgress, type JobProgress } from '../hooks/useJobProgress';
 
 interface Snapshot {
   id: string;
@@ -16,15 +17,32 @@ export default function SnapshotBrowser() {
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState('');
+  
+  const activeJob = useJobProgress(id) as JobProgress | null;
+  const prevActiveJobRef = useRef<JobProgress | null>(null);
 
-  useEffect(() => {
+  const fetchSnapshots = () => {
     fetch(`${API_BASE_URL}/api/snapshots?databaseId=${id}`)
       .then(res => res.json())
       .then(data => {
         setSnapshots(data);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchSnapshots();
   }, [id]);
+
+  useEffect(() => {
+    // If a job was active and is no longer active, refresh the list
+    if (prevActiveJobRef.current && !activeJob) {
+       fetchSnapshots();
+       setMessage(prevActiveJobRef.current.jobType === 'BACKUP' ? 'Backup completed.' : 'Restore completed.');
+       setTimeout(() => setMessage(''), 5000);
+    }
+    prevActiveJobRef.current = activeJob;
+  }, [activeJob]);
 
   const handleRestore = async (snapId: string) => {
     if (!confirm("CRITICAL WARNING: This will forcefully restore the database and replace all current data. Proceed?")) return;
@@ -61,6 +79,9 @@ export default function SnapshotBrowser() {
     }
   };
 
+  const isJobActive = !!activeJob;
+  const activeMessage = activeJob ? (activeJob.jobType === 'BACKUP' ? 'Backing up... please wait.' : 'Restoring... please wait.') : null;
+
   if (loading) return <div className="animate-fade-in" style={{ color: 'var(--color-text-secondary)' }}>Loading snapshots...</div>;
 
   return (
@@ -71,15 +92,26 @@ export default function SnapshotBrowser() {
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Back to Dashboard
           </Link>
-          <h2>Snapshots</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <h2>Snapshots</h2>
+            {isJobActive && (
+              <span className="badge warning" style={{ animation: 'pulse 2s infinite' }}>
+                {activeJob.jobType === 'BACKUP' ? 'Backing up...' : 'Restoring...'}
+              </span>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={() => handleTakeSnapshot(false)} className="primary">Take Snapshot</button>
-          <button onClick={() => handleTakeSnapshot(true)} className="danger">Force Snapshot</button>
+          <button onClick={() => handleTakeSnapshot(false)} className="primary" disabled={isJobActive || restoring}>Take Snapshot</button>
+          <button onClick={() => handleTakeSnapshot(true)} className="danger" disabled={isJobActive || restoring}>Force Snapshot</button>
         </div>
       </div>
 
-      {message && (
+      {activeMessage ? (
+        <div className="badge warning" style={{ marginBottom: '2rem', display: 'flex', padding: '0.75rem 1rem', animation: 'pulse 2s infinite' }}>
+          {activeMessage}
+        </div>
+      ) : message && (
         <div className={`badge ${message.toLowerCase().includes('fail') || message.toLowerCase().includes('error') ? 'error' : 'success'}`} style={{ marginBottom: '2rem', display: 'flex', padding: '0.75rem 1rem' }}>
           {message}
         </div>
@@ -117,7 +149,7 @@ export default function SnapshotBrowser() {
                     </td>
                     <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
                       {snap.status === 'SUCCESS' && (
-                        <button className="button" onClick={() => handleRestore(snap.id)} disabled={restoring}>
+                        <button className="button" onClick={() => handleRestore(snap.id)} disabled={restoring || isJobActive}>
                           Revert
                         </button>
                       )}
