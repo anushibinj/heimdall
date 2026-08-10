@@ -49,12 +49,9 @@ export default function EditDatabase() {
     setError('');
     setTestSuccess(false);
     
-    // In edit mode, if password is empty, the backend test endpoint might fail because we're sending empty password.
-    // However, if the user doesn't update the password, the backend needs the real password to test.
-    // So the test endpoint might fail unless they provide the password again, OR we would need a new endpoint like /api/databases/{id}/test.
-    // For now, we just pass the form data. If it fails due to no password, the user will know to provide one for the test.
+    // In edit mode, if password is empty, the backend will now use the existing password.
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases/test`, {
+      const res = await fetch(`${API_BASE_URL}/api/databases/${id}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

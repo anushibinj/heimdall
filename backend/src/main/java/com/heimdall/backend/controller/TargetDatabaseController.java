@@ -123,4 +123,42 @@ public class TargetDatabaseController {
             return ResponseEntity.badRequest().body("{\"success\":false, \"message\":\"" + e.getMessage() + "\"}");
         }
     }
+
+    @PostMapping("/{id}/test")
+    public ResponseEntity<?> testExistingConnection(@PathVariable UUID id, @RequestBody TargetDatabase databaseDetails) {
+        try {
+            Optional<TargetDatabase> dbOpt = repository.findById(id);
+            if (!dbOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            TargetDatabase existingDb = dbOpt.get();
+            
+            TargetDatabase testDb = new TargetDatabase();
+            testDb.setEngine(databaseDetails.getEngine());
+            testDb.setHost(databaseDetails.getHost());
+            testDb.setPort(databaseDetails.getPort());
+            testDb.setDbName(databaseDetails.getDbName());
+            testDb.setUsername(databaseDetails.getUsername());
+            
+            if (databaseDetails.getPassword() != null && !databaseDetails.getPassword().trim().isEmpty()) {
+                testDb.setPassword(databaseDetails.getPassword());
+            } else {
+                testDb.setPassword(existingDb.getPassword());
+            }
+
+            DatabaseProvider provider = providers.stream()
+                .filter(p -> p.supports(testDb.getEngine()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Unsupported engine"));
+            
+            boolean success = provider.testConnection(testDb);
+            if (success) {
+                return ResponseEntity.ok().body("{\"success\":true}");
+            } else {
+                return ResponseEntity.badRequest().body("{\"success\":false}");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("{\"success\":false, \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
 }
