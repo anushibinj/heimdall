@@ -10,3 +10,5 @@
 - [ ] In the snapshot history in the frontend, also add a button to show the detailed log of why a snapshot failed or got skipped.
 - [ ] Add edit option to existing backup job config so that we can update IP/username/password, etc.
 - [ ] Make the Docker build / compose use the host machine's gradle cache
+- [ ] Add RBAC (Role Based Access Control) to the application. Use OAuth based authentication (using Google Sign In). Add different roles like Admin, Editor, Viewer, etc.
+- [ ] Instead of cron expressions in the frontend to schedule the backup jobs, implement user friendly frequency picker. Use 'Every 15 minutes', 'Every 30 minutes', 'Every hour', 'Every 4 hours', 'Every day', 'Every week', 'Every month', 'Custom'.
