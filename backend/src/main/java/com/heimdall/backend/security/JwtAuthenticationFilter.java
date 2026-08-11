@@ -45,17 +45,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (token == null) {
+            logger.debug("No JWT token found in request to " + request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
             final String userEmail = jwtService.extractUsername(token);
+            logger.info("Extracted user email from token: " + userEmail);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userRepository.findByEmail(userEmail).orElse(null);
                 
-                if (user != null && jwtService.isTokenValid(token, userEmail)) {
+                if (user == null) {
+                    logger.warn("User not found in DB for email: " + userEmail);
+                } else if (!jwtService.isTokenValid(token, userEmail)) {
+                    logger.warn("JWT token is not valid for email: " + userEmail);
+                } else {
+                    logger.info("Successfully authenticated user: " + userEmail);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             user,
                             null,
@@ -66,8 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Ignore invalid token and let the request proceed (it will be unauthorized)
-            logger.warn("JWT Authentication failed: " + e.getMessage());
+            logger.error("JWT Authentication failed: " + e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);

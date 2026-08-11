@@ -19,12 +19,16 @@ public class TokenAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandl
         this.jwtService = jwtService;
     }
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TokenAuthSuccessHandler.class);
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
+        logger.info("Authentication success for OAuth2 user: " + email);
         
         String token = jwtService.generateToken(email);
+        logger.debug("Generated JWT for " + email + ": " + token);
         
         String targetUrl = "http://localhost:5173/?token=" + token;
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
