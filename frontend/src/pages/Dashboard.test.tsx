@@ -22,7 +22,7 @@ describe('Dashboard', () => {
   });
 
   it('renders loading state initially', () => {
-    (globalThis.fetch as jest.Mock).mockImplementation((url: string) => new Promise(() => {}));
+    (globalThis.fetch as jest.Mock).mockImplementation((_url: string) => new Promise(() => {}));
     render(<BrowserRouter><Dashboard /></BrowserRouter>);
     expect(screen.getByText(/initializing sentinel/i)).toBeInTheDocument();
   });
@@ -70,7 +70,7 @@ describe('Dashboard', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /remove database/i }));
 
-    expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/databases/1', { method: 'DELETE' });
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/databases/1', expect.objectContaining({ method: 'DELETE' }));
     
     await waitFor(() => {
       expect(screen.queryByText('Test DB 1')).not.toBeInTheDocument();

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '../config';
+import { apiFetch } from '../utils/apiClient';
 
 export interface JobProgress {
   databaseId: string;
@@ -18,7 +19,7 @@ export function useJobProgress(databaseId?: string) {
 
     const fetchActiveJobs = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/events/active`);
+        const res = await apiFetch(`/api/events/active`);
         if (res.ok) {
           const jobs: JobProgress[] = await res.json();
           const jobMap: Record<string, JobProgress> = {};
@@ -33,9 +34,11 @@ export function useJobProgress(databaseId?: string) {
     };
 
     const setupSSE = () => {
-      sse = new EventSource(`${API_BASE_URL}/api/events/subscribe`);
+      const token = localStorage.getItem('token');
+      const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+      sse = new EventSource(`${API_BASE_URL}/api/events/subscribe${tokenParam}`);
 
-      sse.onmessage = (event) => {
+      sse.onmessage = () => {
         // Fallback is no longer needed if we receive a message
         if (usingFallback) {
           usingFallback = false;

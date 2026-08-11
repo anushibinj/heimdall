@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API_BASE_URL } from '../config';
+import { apiFetch } from '../utils/apiClient';
 import CronPicker from '../components/CronPicker';
 
 export default function EditDatabase() {
@@ -23,7 +23,7 @@ export default function EditDatabase() {
   const [testSuccess, setTestSuccess] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/databases/${id}`)
+    apiFetch(`/api/databases/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load database config');
         return res.json();
@@ -52,7 +52,7 @@ export default function EditDatabase() {
     
     // In edit mode, if password is empty, the backend will now use the existing password.
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases/${id}/test`, {
+      const res = await apiFetch(`/api/databases/${id}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -73,7 +73,7 @@ export default function EditDatabase() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases/${id}`, {
+      const res = await apiFetch(`/api/databases/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

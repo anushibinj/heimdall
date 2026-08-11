@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { apiFetch } from '../utils/apiClient';
+import { API_BASE_URL } from '../config';
 
 export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
 
@@ -25,12 +27,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+      localStorage.setItem('token', token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     fetchUser();
   }, []);
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await apiFetch('/api/auth/me');
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
@@ -46,13 +56,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const login = () => {
-    window.location.href = '/oauth2/authorization/google';
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
 
   const logout = async () => {
     try {
-      // Assuming Spring Security's default logout behavior with CSRF disabled
-      await fetch('/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('token');
       setUser(null);
       window.location.href = '/login';
     } catch (error) {

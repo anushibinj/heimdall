@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { API_BASE_URL } from '../config';
+import { apiFetch } from '../utils/apiClient';
 import { useJobProgress, type JobProgress } from '../hooks/useJobProgress';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,7 +28,7 @@ export default function SnapshotBrowser() {
   const prevActiveJobRef = useRef<JobProgress | null>(null);
 
   const fetchSnapshots = () => {
-    fetch(`${API_BASE_URL}/api/snapshots?databaseId=${id}`)
+    apiFetch(`/api/snapshots?databaseId=${id}`)
       .then(res => res.json())
       .then(data => {
         setSnapshots(data);
@@ -56,7 +56,7 @@ export default function SnapshotBrowser() {
     setRestoring(true);
     setMessage('Restoring... please wait. Do not close this page.');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/snapshots/${snapId}/restore`, { method: 'POST' });
+      const res = await apiFetch(`/api/snapshots/${snapId}/restore`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage('Restore completed successfully!');
@@ -73,7 +73,7 @@ export default function SnapshotBrowser() {
   const handleTakeSnapshot = async (force: boolean = false) => {
     setMessage(`Triggering snapshot${force ? ' (forced)' : ''}... please wait.`);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases/${id}/snapshot?force=${force}`, { method: 'POST' });
+      const res = await apiFetch(`/api/databases/${id}/snapshot?force=${force}`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage('Snapshot triggered successfully! It will run in the background.');
@@ -90,7 +90,7 @@ export default function SnapshotBrowser() {
     setLogLoading(true);
     setSelectedLog('');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/snapshots/${snapId}/log`);
+      const res = await apiFetch(`/api/snapshots/${snapId}/log`);
       if (res.ok) {
         const text = await res.text();
         setSelectedLog(text);

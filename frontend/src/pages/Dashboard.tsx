@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_BASE_URL } from '../config';
+import { apiFetch } from '../utils/apiClient';
 import { useJobProgress } from '../hooks/useJobProgress';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const activeJobs = useJobProgress() as Record<string, import('../hooks/useJobProgress').JobProgress>;
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/databases`)
+    apiFetch(`/api/databases`)
       .then(res => res.json())
       .then(data => {
         setDatabases(data);
@@ -36,7 +36,7 @@ export default function Dashboard() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to remove this database configuration?")) {
-      await fetch(`${API_BASE_URL}/api/databases/${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/databases/${id}`, { method: 'DELETE' });
       setDatabases(databases.filter(db => db.id !== id));
     }
   };

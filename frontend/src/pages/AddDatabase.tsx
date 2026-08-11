@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../config';
+import { apiFetch } from '../utils/apiClient';
 import CronPicker from '../components/CronPicker';
 
 export default function AddDatabase() {
@@ -28,7 +28,7 @@ export default function AddDatabase() {
     setError('');
     setTestSuccess(false);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases/test`, {
+      const res = await apiFetch(`/api/databases/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -49,7 +49,7 @@ export default function AddDatabase() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE_URL}/api/databases`, {
+      const res = await apiFetch(`/api/databases`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
