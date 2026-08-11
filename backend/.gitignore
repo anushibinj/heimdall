@@ -38,3 +38,6 @@ out/
 
 heimdall-data/
 heimdall-test-data/
+
+## local dev files
+application-dev.yml
