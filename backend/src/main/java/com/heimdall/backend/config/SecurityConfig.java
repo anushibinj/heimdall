@@ -20,6 +20,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import com.heimdall.backend.security.JwtService;
+import com.heimdall.backend.repository.UserRepository;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -31,10 +34,11 @@ public class SecurityConfig {
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService,
                           TokenAuthSuccessHandler tokenAuthSuccessHandler,
-                          JwtAuthenticationFilter jwtAuthenticationFilter) {
+                          JwtService jwtService,
+                          UserRepository userRepository) {
         this.customOAuth2UserService = customOAuth2UserService;
         this.tokenAuthSuccessHandler = tokenAuthSuccessHandler;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService, userRepository);
     }
 
     @Bean
@@ -44,7 +48,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disabled for simplicity in this MVP local tool
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                // Only permit the OAuth2 login flow, H2 console, and error pages publicly
+                // /api/auth/me is intentionally NOT in this list so the JWT filter runs for it
+                .requestMatchers("/api/auth/logout", "/login/**", "/oauth2/**", "/h2-console/**", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e
