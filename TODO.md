@@ -22,3 +22,4 @@
 - [ ] Users with the EDITOR role should be able to configure only the ones initially created by them. One EDITOR should NOT be able to edit someone else's database configuration.
 - [ ] Moonshot: Add Analytics for the configured databases. Also, figure out who should see what analytics.
 - [ ] Remove all hardcoded values for the frontend URLs in the spring boot code. Accept that value via a property in application.yml.
+- [ ] CORS config properties for allowed origins, etc should be accepted as a application.yml property (comma separated).
