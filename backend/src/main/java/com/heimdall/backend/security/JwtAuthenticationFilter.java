@@ -55,11 +55,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userRepository.findByEmail(userEmail).orElse(null);
-                
                 if (user == null) {
-                    logger.warn("User not found in DB for email: " + userEmail);
+                    logger.debug("User not found in DB for email: " + userEmail);
                 } else if (!jwtService.isTokenValid(token, userEmail)) {
-                    logger.warn("JWT token is not valid for email: " + userEmail);
+                    logger.debug("JWT token is not valid for email: " + userEmail);
                 } else {
                     logger.info("Successfully authenticated user: " + userEmail);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

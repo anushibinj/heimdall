@@ -3,6 +3,7 @@ package com.heimdall.backend.config;
 import com.heimdall.backend.security.JwtAuthenticationFilter;
 import com.heimdall.backend.security.TokenAuthSuccessHandler;
 import com.heimdall.backend.service.CustomOAuth2UserService;
+import com.heimdall.backend.service.CustomOidcUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -29,14 +30,17 @@ import com.heimdall.backend.repository.UserRepository;
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
     private final TokenAuthSuccessHandler tokenAuthSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService,
+                          CustomOidcUserService customOidcUserService,
                           TokenAuthSuccessHandler tokenAuthSuccessHandler,
                           JwtService jwtService,
                           UserRepository userRepository) {
         this.customOAuth2UserService = customOAuth2UserService;
+        this.customOidcUserService = customOidcUserService;
         this.tokenAuthSuccessHandler = tokenAuthSuccessHandler;
         this.jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService, userRepository);
     }
@@ -57,7 +61,10 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
             .oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                    .oidcUserService(customOidcUserService)
+                )
                 .successHandler(tokenAuthSuccessHandler)
             )
             .logout(logout -> logout
