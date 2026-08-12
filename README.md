@@ -72,3 +72,18 @@ To run the backend via Docker (which includes the necessary `pg_dump` tools with
 ```bash
 docker compose up -d
 ```
+
+## Environment Configuration
+
+The application can be configured using environment variables (see [.env.example](.env.example)):
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth2 Client ID | `sample-client-id-needs-to-be-changed` |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth2 Client Secret | `sample-client-secret-needs-to-be-changed` |
+| `HEIMDALL_FRONTEND_URL` | Frontend URL for OAuth redirects & logout | `http://localhost:5173` |
+| `HEIMDALL_CORS_ALLOWED_ORIGINS` | Comma-separated CORS allowed origin patterns | `http://localhost:5173,http://127.0.0.1:5173` |
+| `HEIMDALL_ADMIN_EMAIL` | Super admin user email address | `admin@example.com` |
+| `HEIMDALL_ALLOWED_DOMAINS` | Allowed Google domains (comma-separated, empty allows all) | *(empty)* |
+| `HEIMDALL_SECRET_KEY` | AES encryption key for stored database passwords | `ThisIsADefaultSecretKeyForDevEnv` |
+

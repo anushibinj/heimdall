@@ -1,0 +1,55 @@
+flowchart TD
+    subgraph Frontend["React Frontend (Vite + TS)"]
+        UI["UI Pages & Components"]
+        AuthCtx["Auth Context (JWT)"]
+        Axios["Axios Client"]
+    end
+
+    subgraph Backend["Spring Boot Backend"]
+        Security["Spring Security (OAuth2 / OIDC / JWT Filter)"]
+        CORS["CORS Configuration (Dynamic Origins)"]
+        OAuthHandler["TokenAuthSuccessHandler (Redirect to Frontend URL)"]
+        
+        subgraph Controllers["REST Controllers"]
+            AuthController["AuthController (/api/auth)"]
+            TargetDbController["TargetDatabaseController (/api/databases)"]
+            SnapshotController["SnapshotController (/api/snapshots)"]
+        end
+
+        subgraph Services["Service Layer"]
+            UserService["CustomOAuth2UserService / CustomOidcUserService"]
+            JwtService["JwtService"]
+            BackupScheduler["Quartz Scheduler (BackupJob)"]
+            RestorationService["RestorationService"]
+            CleanupService["SnapshotCleanupService"]
+        end
+
+        subgraph Storage["Data & Dumps"]
+            H2DB[("H2 Config Database")]
+            Dumps[("Dump Directory ./heimdall-data/dumps")]
+        end
+    end
+
+    subgraph External["External Services & Databases"]
+        GoogleOAuth["Google Identity Provider"]
+        TargetPostgres[("Target PostgreSQL Databases")]
+    end
+
+    %% Flow interactions
+    UI -->|1. Sign in with Google| Security
+    Security -->|2. Delegate Auth| GoogleOAuth
+    GoogleOAuth -->|3. OAuth2 Code & Claims| UserService
+    UserService -->|4. User Role Mapping & Sync| H2DB
+    Security -->|5. On Success| OAuthHandler
+    OAuthHandler -->|6. Redirect with JWT (?token=)| UI
+    UI -->|7. API Requests with Bearer JWT| Axios
+    Axios -->|8. HTTP Requests| CORS
+    CORS --> Security
+    Security --> Controllers
+
+    Controllers --> Services
+    BackupScheduler -->|Execute pg_dump| TargetPostgres
+    BackupScheduler -->|Store Snapshot| Dumps
+    RestorationService -->|Execute pg_restore| TargetPostgres
+    RestorationService -->|Read Snapshot| Dumps
+    CleanupService -->|Purge Expired Snapshots| Dumps

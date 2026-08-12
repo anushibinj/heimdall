@@ -26,6 +26,9 @@ spring:
       path: /h2-console
 
 heimdall:
+  frontend-url: ${HEIMDALL_FRONTEND_URL:http://localhost:5173}
+  cors:
+    allowed-origins: ${HEIMDALL_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   security:
     admin-email: ${HEIMDALL_ADMIN_EMAIL:admin@example.com}
     allowed-domains: ${HEIMDALL_ALLOWED_DOMAINS:}

@@ -4,6 +4,7 @@ import com.heimdall.backend.security.JwtAuthenticationFilter;
 import com.heimdall.backend.security.TokenAuthSuccessHandler;
 import com.heimdall.backend.service.CustomOAuth2UserService;
 import com.heimdall.backend.service.CustomOidcUserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.heimdall.backend.security.JwtService;
 import com.heimdall.backend.repository.UserRepository;
@@ -33,20 +35,27 @@ public class SecurityConfig {
     private final CustomOidcUserService customOidcUserService;
     private final TokenAuthSuccessHandler tokenAuthSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String frontendUrl;
+    private final String corsAllowedOrigins;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService,
                           CustomOidcUserService customOidcUserService,
                           TokenAuthSuccessHandler tokenAuthSuccessHandler,
                           JwtService jwtService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          @Value("${heimdall.frontend-url:http://localhost:5173}") String frontendUrl,
+                          @Value("${heimdall.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}") String corsAllowedOrigins) {
         this.customOAuth2UserService = customOAuth2UserService;
         this.customOidcUserService = customOidcUserService;
         this.tokenAuthSuccessHandler = tokenAuthSuccessHandler;
         this.jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService, userRepository);
+        this.frontendUrl = frontendUrl;
+        this.corsAllowedOrigins = corsAllowedOrigins;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        String baseUrl = frontendUrl.endsWith("/") ? frontendUrl.substring(0, frontendUrl.length() - 1) : frontendUrl;
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable()) // Disabled for simplicity in this MVP local tool
@@ -69,7 +78,7 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
-                .logoutSuccessUrl("http://localhost:5173/login")
+                .logoutSuccessUrl(baseUrl + "/login")
                 .permitAll()
                 .clearAuthentication(true)
                 .deleteCookies("JSESSIONID")
@@ -84,7 +93,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+        configuration.setAllowedOriginPatterns(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);
