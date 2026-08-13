@@ -25,3 +25,4 @@
 - [x] CORS config properties for allowed origins, etc should be accepted as a application.yml property (comma separated).
 - [x] Add support for S3 to store the backups of databases. Use SeaweedFS to simulate S3 backup locally. Store the required configuration values in application.yml. Note that the code should be written to handle AWS S3 as well. But should work seamlessly even with SeaweedFS locally (no need to use AWS SDK).
 - [ ] Add a hard limit on the size of data a user can store in the S3 bucket per user. This can be done via a property in application.yml.
+- [ ] If a backup job fails, don't show in the frontend that the job succeeded. As of now, even when a S3 backup job failed, I see a success message in the frontend. Instead, it should show the failure message and reason and stacktrace.
