@@ -47,7 +47,7 @@ heimdall:
       endpoint: ${HEIMDALL_S3_ENDPOINT:http://localhost:8333}
       region: ${HEIMDALL_S3_REGION:us-east-1}
       bucket-name: ${HEIMDALL_S3_BUCKET_NAME:heimdall-backups}
-      access-key: ${HEIMDALL_S3_ACCESS_KEY:dummy-access-key}
-      secret-key: ${HEIMDALL_S3_SECRET_KEY:dummy-secret-key}
+      access-key: ${HEIMDALL_S3_ACCESS_KEY:}
+      secret-key: ${HEIMDALL_S3_SECRET_KEY:}
       path-style-access: ${HEIMDALL_S3_PATH_STYLE_ACCESS:true}
       auto-create-bucket: ${HEIMDALL_S3_AUTO_CREATE_BUCKET:true}

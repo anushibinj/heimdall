@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -38,8 +39,8 @@ public class S3StorageService implements StorageService {
             @Value("${heimdall.storage.s3.endpoint:http://localhost:8333}") String endpoint,
             @Value("${heimdall.storage.s3.region:us-east-1}") String region,
             @Value("${heimdall.storage.s3.bucket-name:heimdall-backups}") String bucketName,
-            @Value("${heimdall.storage.s3.access-key:dummy-access-key}") String accessKey,
-            @Value("${heimdall.storage.s3.secret-key:dummy-secret-key}") String secretKey,
+            @Value("${heimdall.storage.s3.access-key:}") String accessKey,
+            @Value("${heimdall.storage.s3.secret-key:}") String secretKey,
             @Value("${heimdall.storage.s3.path-style-access:true}") boolean pathStyleAccess,
             @Value("${heimdall.storage.s3.auto-create-bucket:true}") boolean autoCreateBucket) {
         this.endpoint = endpoint;
@@ -73,6 +74,8 @@ public class S3StorageService implements StorageService {
                 builder.credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)
                 ));
+            } else {
+                builder.credentialsProvider(AnonymousCredentialsProvider.create());
             }
 
             if (endpoint != null && !endpoint.isBlank()) {
@@ -84,8 +87,9 @@ public class S3StorageService implements StorageService {
             }
 
             this.s3Client = builder.build();
-            log.info("Initialized S3Client with endpoint='{}', region='{}', bucket='{}', pathStyle={}",
-                    endpoint, region, bucketName, pathStyleAccess);
+            log.info("Initialized S3Client with endpoint='{}', region='{}', bucket='{}', pathStyle={}, auth={}",
+                    endpoint, region, bucketName, pathStyleAccess,
+                    (accessKey != null && !accessKey.isBlank() ? "credentials" : "anonymous"));
         }
 
         if (autoCreateBucket) {

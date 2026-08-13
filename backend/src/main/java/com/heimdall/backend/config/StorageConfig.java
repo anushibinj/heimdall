@@ -17,8 +17,8 @@ public class StorageConfig {
             @Value("${heimdall.storage.s3.endpoint:http://localhost:8333}") String endpoint,
             @Value("${heimdall.storage.s3.region:us-east-1}") String region,
             @Value("${heimdall.storage.s3.bucket-name:heimdall-backups}") String bucketName,
-            @Value("${heimdall.storage.s3.access-key:dummy-access-key}") String accessKey,
-            @Value("${heimdall.storage.s3.secret-key:dummy-secret-key}") String secretKey,
+            @Value("${heimdall.storage.s3.access-key:}") String accessKey,
+            @Value("${heimdall.storage.s3.secret-key:}") String secretKey,
             @Value("${heimdall.storage.s3.path-style-access:true}") boolean pathStyleAccess,
             @Value("${heimdall.storage.s3.auto-create-bucket:true}") boolean autoCreateBucket) {
         return new S3StorageService(endpoint, region, bucketName, accessKey, secretKey, pathStyleAccess, autoCreateBucket);
