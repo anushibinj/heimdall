@@ -67,11 +67,22 @@ The frontend will be available at `http://localhost:5173`.
 
 ## Docker Setup
 
-To run the backend via Docker (which includes the necessary `pg_dump` tools within the container), you can use the provided Docker compose configuration:
+To run the backend and local S3 storage simulator (SeaweedFS) via Docker, use the provided Docker compose configuration:
 
 ```bash
 docker compose up -d
 ```
+
+This starts:
+- **SeaweedFS**: S3-compatible object storage on `http://localhost:8333` (master on `:9333`, filer on `:8888`).
+- **Heimdall Backend**: Spring Boot backend on `http://localhost:8080` configured to use the SeaweedFS S3 endpoint.
+
+## Storage Configuration (AWS S3 & SeaweedFS)
+
+Heimdall supports storing database backups in any S3-compatible object storage (including AWS S3 and SeaweedFS locally).
+
+- **Local Development**: Runs out-of-the-box with SeaweedFS (`http://localhost:8333`).
+- **Production AWS S3**: Set `HEIMDALL_S3_ENDPOINT=` (empty or standard AWS endpoint), `HEIMDALL_S3_PATH_STYLE_ACCESS=false`, and provide valid `HEIMDALL_S3_ACCESS_KEY` & `HEIMDALL_S3_SECRET_KEY` credentials.
 
 ## Environment Configuration
 
@@ -86,4 +97,13 @@ The application can be configured using environment variables (see [.env.example
 | `HEIMDALL_ADMIN_EMAIL` | Super admin user email address | `admin@example.com` |
 | `HEIMDALL_ALLOWED_DOMAINS` | Allowed Google domains (comma-separated, empty allows all) | *(empty)* |
 | `HEIMDALL_SECRET_KEY` | AES encryption key for stored database passwords | `ThisIsADefaultSecretKeyForDevEnv` |
+| `HEIMDALL_STORAGE_TYPE` | Storage type (`s3` or `local`) | `s3` |
+| `HEIMDALL_S3_ENDPOINT` | S3 API endpoint URL (for SeaweedFS or custom S3) | `http://localhost:8333` |
+| `HEIMDALL_S3_REGION` | S3 Region | `us-east-1` |
+| `HEIMDALL_S3_BUCKET_NAME` | S3 Bucket name for backups | `heimdall-backups` |
+| `HEIMDALL_S3_ACCESS_KEY` | S3 Access Key / AWS Access Key ID | `dummy-access-key` |
+| `HEIMDALL_S3_SECRET_KEY` | S3 Secret Key / AWS Secret Access Key | `dummy-secret-key` |
+| `HEIMDALL_S3_PATH_STYLE_ACCESS` | Use path-style bucket access (required for SeaweedFS/MinIO) | `true` |
+| `HEIMDALL_S3_AUTO_CREATE_BUCKET` | Automatically create S3 bucket on startup if missing | `true` |
+
 

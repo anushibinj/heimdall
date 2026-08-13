@@ -2,6 +2,7 @@ package com.heimdall.backend.scheduler;
 
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.repository.SnapshotRepository;
+import com.heimdall.backend.service.storage.StorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,9 @@ public class SnapshotCleanupServiceTest {
     @Mock
     private SnapshotRepository snapshotRepository;
 
+    @Mock
+    private StorageService storageService;
+
     @InjectMocks
     private SnapshotCleanupService cleanupService;
 
@@ -35,13 +39,14 @@ public class SnapshotCleanupServiceTest {
     public void testCleanupOldSnapshots() {
         Snapshot oldSnapshot = new Snapshot();
         oldSnapshot.setId(UUID.randomUUID());
-        oldSnapshot.setFilePath("/tmp/nonexistent_file.backup");
+        oldSnapshot.setFilePath("databases/test/old_file.backup");
         
         when(snapshotRepository.findByCreatedAtBefore(any(LocalDateTime.class)))
                 .thenReturn(Collections.singletonList(oldSnapshot));
                 
         cleanupService.cleanupOldSnapshots();
         
+        verify(storageService, times(1)).deleteFile("databases/test/old_file.backup");
         verify(snapshotRepository, times(1)).findByCreatedAtBefore(any(LocalDateTime.class));
         verify(snapshotRepository, times(1)).delete(oldSnapshot);
     }
@@ -53,6 +58,7 @@ public class SnapshotCleanupServiceTest {
                 
         cleanupService.cleanupOldSnapshots();
         
+        verify(storageService, never()).deleteFile(any());
         verify(snapshotRepository, times(1)).findByCreatedAtBefore(any(LocalDateTime.class));
         verify(snapshotRepository, never()).delete(any());
     }

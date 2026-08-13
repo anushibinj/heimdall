@@ -41,3 +41,13 @@ heimdall:
     max-retry: 15
     dump-dir: ./heimdall-data/dumps
     process-timeout-minutes: 60
+  storage:
+    type: local
+    s3:
+      endpoint: http://localhost:8333
+      region: us-east-1
+      bucket-name: test-bucket
+      access-key: dummy
+      secret-key: dummy
+      path-style-access: true
+      auto-create-bucket: false

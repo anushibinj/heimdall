@@ -22,17 +22,19 @@ flowchart TD
             BackupScheduler["Quartz Scheduler (BackupJob)"]
             RestorationService["RestorationService"]
             CleanupService["SnapshotCleanupService"]
+            StorageService["StorageService (S3StorageService / LocalStorageService)"]
         end
 
-        subgraph Storage["Data & Dumps"]
+        subgraph Storage["Internal Data"]
             H2DB[("H2 Config Database")]
-            Dumps[("Dump Directory ./heimdall-data/dumps")]
         end
     end
 
-    subgraph External["External Services & Databases"]
+    subgraph External["External Services & Storage"]
         GoogleOAuth["Google Identity Provider"]
         TargetPostgres[("Target PostgreSQL Databases")]
+        S3Storage[("S3 Object Storage (AWS S3 / SeaweedFS)")]
+        LocalDumps[("Local FS Dumps (Fallback)")]
     end
 
     %% Flow interactions
@@ -49,7 +51,9 @@ flowchart TD
 
     Controllers --> Services
     BackupScheduler -->|Execute pg_dump| TargetPostgres
-    BackupScheduler -->|Store Snapshot| Dumps
+    BackupScheduler -->|Upload Snapshot| StorageService
+    RestorationService -->|Download Snapshot| StorageService
     RestorationService -->|Execute pg_restore| TargetPostgres
-    RestorationService -->|Read Snapshot| Dumps
-    CleanupService -->|Purge Expired Snapshots| Dumps
+    CleanupService -->|Purge Expired Snapshots| StorageService
+    StorageService -->|S3 API| S3Storage
+    StorageService -.->|Local FS| LocalDumps

@@ -19,6 +19,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +45,9 @@ public class BackupJobTest {
     private SseService sseService;
 
     @Mock
+    private com.heimdall.backend.service.storage.StorageService storageService;
+
+    @Mock
     private JobExecutionContext context;
 
     @Mock
@@ -60,6 +64,7 @@ public class BackupJobTest {
         ReflectionTestUtils.setField(backupJob, "timeoutMillis", 300000L);
         ReflectionTestUtils.setField(backupJob, "dumpDir", "/tmp/dumps");
         ReflectionTestUtils.setField(backupJob, "providers", List.of(provider));
+        lenient().when(storageService.uploadFile(anyString(), any(File.class))).thenAnswer(inv -> inv.getArgument(0));
 
         dbId = UUID.randomUUID();
         db = new TargetDatabase();

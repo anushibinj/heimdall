@@ -3,7 +3,7 @@ package com.heimdall.backend.service;
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.entity.TargetDatabase;
 import com.heimdall.backend.provider.DatabaseProvider;
-import com.heimdall.backend.service.SseService;
+import com.heimdall.backend.service.storage.StorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,10 +12,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -28,6 +30,9 @@ public class RestorationServiceTest {
 
     @Mock
     private SseService sseService;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private RestorationService restorationService;
@@ -47,29 +52,30 @@ public class RestorationServiceTest {
 
         snapshot = new Snapshot();
         snapshot.setTargetDatabase(db);
-        snapshot.setFilePath("/tmp/snapshot.backup");
+        snapshot.setFilePath("databases/test/snapshot.backup");
 
         lenient().when(provider.supports("POSTGRES")).thenReturn(true);
+        lenient().when(storageService.downloadToFile(anyString(), any(File.class))).thenAnswer(inv -> inv.getArgument(1));
     }
 
     @Test
     void testRestoreSnapshotSuccess() throws Exception {
         restorationService.restoreSnapshot(snapshot);
 
+        verify(storageService).downloadToFile(eq("databases/test/snapshot.backup"), any(File.class));
         verify(provider).executeBackup(eq(db), anyString());
         verify(provider).terminateActiveConnections(db);
-        verify(provider).executeRestore(db, snapshot.getFilePath());
+        verify(provider).executeRestore(eq(db), anyString());
     }
 
     @Test
     void testRestoreSnapshotFailureTriggersRollback() throws Exception {
-        doThrow(new RuntimeException("Restore failed")).when(provider).executeRestore(db, snapshot.getFilePath());
+        doThrow(new RuntimeException("Restore failed")).when(provider).executeRestore(eq(db), anyString());
 
         assertThrows(RuntimeException.class, () -> restorationService.restoreSnapshot(snapshot));
 
         verify(provider).executeBackup(eq(db), anyString());
         verify(provider, times(2)).terminateActiveConnections(db);
-        verify(provider).executeRestore(db, snapshot.getFilePath());
         verify(provider).executeRestore(eq(db), argThat(path -> path.contains("rollback_")));
     }
 }

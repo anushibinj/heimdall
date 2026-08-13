@@ -4,7 +4,7 @@ import com.heimdall.backend.dto.JobProgressEvent;
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.entity.TargetDatabase;
 import com.heimdall.backend.provider.DatabaseProvider;
-import com.heimdall.backend.service.SseService;
+import com.heimdall.backend.service.storage.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,9 @@ public class RestorationService {
 
     @Autowired
     private SseService sseService;
+
+    @Autowired
+    private StorageService storageService;
 
     @Value("${heimdall.backup.dump-dir:./heimdall-data/dumps}")
     private String dumpDir;
@@ -50,14 +53,31 @@ public class RestorationService {
         log.info("Creating rollback safety backup: {}", rollbackFilePath);
         provider.executeBackup(db, rollbackFilePath);
 
+        File downloadedTempFile = null;
         try {
+            // Determine restore file path (local or downloaded from S3 storage)
+            String restoreFilePath;
+            File localFile = new File(snapshot.getFilePath());
+            if (localFile.exists() && localFile.isFile()) {
+                restoreFilePath = localFile.getAbsolutePath();
+            } else {
+                File restoreTempDir = new File(dumpDir, "restore-temp/" + db.getId());
+                if (!restoreTempDir.exists()) {
+                    restoreTempDir.mkdirs();
+                }
+                downloadedTempFile = new File(restoreTempDir, "restore_" + System.currentTimeMillis() + ".backup");
+                log.info("Downloading snapshot from storage key '{}' to '{}'", snapshot.getFilePath(), downloadedTempFile.getAbsolutePath());
+                storageService.downloadToFile(snapshot.getFilePath(), downloadedTempFile);
+                restoreFilePath = downloadedTempFile.getAbsolutePath();
+            }
+
             // 2. Terminate active connections
             log.info("Terminating active connections on {}", db.getDbName());
             provider.terminateActiveConnections(db);
 
             // 3. Execute restore
-            log.info("Executing restore from snapshot: {}", snapshot.getFilePath());
-            provider.executeRestore(db, snapshot.getFilePath());
+            log.info("Executing restore from snapshot: {}", restoreFilePath);
+            provider.executeRestore(db, restoreFilePath);
 
             // 4. Keep rollback safety backup on success for future reference
             log.info("Restore successful. Keeping rollback backup for reference: {}", rollbackFilePath);
@@ -74,6 +94,10 @@ public class RestorationService {
                 e.addSuppressed(rollbackException);
             }
             throw new RuntimeException("Restoration failed, rollback initiated.", e);
+        } finally {
+            if (downloadedTempFile != null && downloadedTempFile.exists()) {
+                downloadedTempFile.delete();
+            }
         }
     }
 }

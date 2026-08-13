@@ -23,5 +23,5 @@
 - [ ] Moonshot: Add Analytics for the configured databases. Also, figure out who should see what analytics.
 - [x] Remove all hardcoded values for the frontend URLs in the spring boot code. Accept that value via a property in application.yml.
 - [x] CORS config properties for allowed origins, etc should be accepted as a application.yml property (comma separated).
-- [ ] Add support for S3 to store the backups of databases. Use SeaweedFS to simulate S3 backup locally. Store the required configuration values in application.yml. Note that the code should be written to handle AWS S3 as well. But should work seamlessly even with SeaweedFS locally (no need to use AWS SDK).
+- [x] Add support for S3 to store the backups of databases. Use SeaweedFS to simulate S3 backup locally. Store the required configuration values in application.yml. Note that the code should be written to handle AWS S3 as well. But should work seamlessly even with SeaweedFS locally (no need to use AWS SDK).
 - [ ] Add a hard limit on the size of data a user can store in the S3 bucket per user. This can be done via a property in application.yml.

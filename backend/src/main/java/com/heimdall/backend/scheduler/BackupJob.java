@@ -36,6 +36,9 @@ public class BackupJob implements Job {
     private SseService sseService;
 
     @Autowired
+    private com.heimdall.backend.service.storage.StorageService storageService;
+
+    @Autowired
     private List<DatabaseProvider> providers;
 
     @Value("${heimdall.backup.timeout-millis:300000}")
@@ -92,7 +95,7 @@ public class BackupJob implements Job {
 
             log.info("Starting backup for database {} (ID: {})", db.getName(), db.getId());
             // 3. Execute Backup
-            File dir = new File(dumpDir, db.getId().toString());
+            File dir = new File(dumpDir, "temp/" + db.getId().toString());
             if (!dir.exists()) {
                 dir.mkdirs();
             }
@@ -102,14 +105,23 @@ public class BackupJob implements Job {
 
             String logOutput = provider.executeBackup(db, backupFilePath);
 
-            log.info("Successfully completed backup for database {}. File: {}", db.getName(), backupFilePath);
+            // Upload backup file to storage (S3 / Local)
+            String storageKey = "databases/" + db.getId().toString() + "/" + fileName;
+            String storedPath = storageService.uploadFile(storageKey, backupFile);
+
+            log.info("Successfully completed backup for database {}. Storage Key: {}", db.getName(), storedPath);
 
             newSnapshot.setStatus("SUCCESS");
             newSnapshot.setChecksum(newChecksum);
-            newSnapshot.setFilePath(backupFilePath);
+            newSnapshot.setFilePath(storedPath);
             newSnapshot.setFileSizeBytes(backupFile.length());
             newSnapshot.setLogOutput(logOutput);
             snapshotRepository.save(newSnapshot);
+
+            // Clean up temporary local working file
+            if (backupFile.exists()) {
+                backupFile.delete();
+            }
 
             sseService.sendEvent(new JobProgressEvent(db.getId(), "BACKUP", "COMPLETED", "Backup successful"));
 

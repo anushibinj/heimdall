@@ -1,13 +1,32 @@
 version: '3.8'
 
 services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: heimdall-seaweedfs
+    ports:
+      - "8333:8333" # S3 API endpoint
+      - "9333:9333" # Master HTTP
+      - "8888:8888" # Filer HTTP
+    command: "server -s3 -dir=/data"
+    volumes:
+      - ./heimdall-data/seaweedfs:/data
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      - HEIMDALL_S3_ENDPOINT=http://seaweedfs:8333
+      - HEIMDALL_S3_PATH_STYLE_ACCESS=true
+      - HEIMDALL_S3_AUTO_CREATE_BUCKET=true
+      - HEIMDALL_S3_BUCKET_NAME=heimdall-backups
     volumes:
       # Mount the heimdall-data directory to persist H2 DB and pg_dump backups
       - ./heimdall-data:/app/heimdall-data
+    depends_on:
+      - seaweedfs
     restart: unless-stopped

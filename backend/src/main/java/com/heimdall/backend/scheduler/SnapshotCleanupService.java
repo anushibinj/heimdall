@@ -2,14 +2,15 @@ package com.heimdall.backend.scheduler;
 
 import com.heimdall.backend.entity.Snapshot;
 import com.heimdall.backend.repository.SnapshotRepository;
+import com.heimdall.backend.service.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,11 +24,15 @@ public class SnapshotCleanupService {
 
     private final SnapshotRepository snapshotRepository;
 
+    private final StorageService storageService;
+
     @Value("${heimdall.snapshot.retention-days:30}")
     private int retentionDays;
 
-    public SnapshotCleanupService(SnapshotRepository snapshotRepository) {
+    @Autowired
+    public SnapshotCleanupService(SnapshotRepository snapshotRepository, StorageService storageService) {
         this.snapshotRepository = snapshotRepository;
+        this.storageService = storageService;
     }
 
     // Run daily at 1:00 AM
@@ -42,12 +47,20 @@ public class SnapshotCleanupService {
         int deletedCount = 0;
         for (Snapshot snapshot : oldSnapshots) {
             try {
-                Path filePath = Paths.get(snapshot.getFilePath());
-                Files.deleteIfExists(filePath);
+                if (snapshot.getFilePath() != null && !snapshot.getFilePath().isBlank()) {
+                    if (storageService != null) {
+                        storageService.deleteFile(snapshot.getFilePath());
+                    }
+                    try {
+                        Path filePath = Paths.get(snapshot.getFilePath());
+                        Files.deleteIfExists(filePath);
+                    } catch (Exception ignored) {
+                    }
+                }
                 snapshotRepository.delete(snapshot);
                 deletedCount++;
                 log.debug("Deleted old snapshot: {}", snapshot.getId());
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("Failed to delete snapshot file for ID: " + snapshot.getId(), e);
             }
         }
