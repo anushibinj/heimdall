@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../utils/apiClient';
-import { useJobProgress, type JobProgress } from '../hooks/useJobProgress';
+import { useJobProgressDetails, type JobProgress } from '../hooks/useJobProgress';
 import { useAuth } from '../context/AuthContext';
 
 interface Snapshot {
@@ -12,6 +12,13 @@ interface Snapshot {
   filePath: string;
 }
 
+interface JobFailure {
+  title: string;
+  reason: string;
+  stacktrace?: string;
+  snapshotId?: string;
+}
+
 export default function SnapshotBrowser() {
   const { user } = useAuth();
   const { id } = useParams();
@@ -19,40 +26,98 @@ export default function SnapshotBrowser() {
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState('');
+  const [jobFailure, setJobFailure] = useState<JobFailure | null>(null);
   
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState('');
   const [logLoading, setLogLoading] = useState(false);
   
-  const activeJob = useJobProgress(id) as JobProgress | null;
+  const { activeJob, lastEvent } = useJobProgressDetails(id);
   const prevActiveJobRef = useRef<JobProgress | null>(null);
 
-  const fetchSnapshots = () => {
-    apiFetch(`/api/snapshots?databaseId=${id}`)
-      .then(res => res.json())
-      .then(data => {
+  const fetchSnapshots = useCallback(async (): Promise<Snapshot[]> => {
+    try {
+      const res = await apiFetch(`/api/snapshots?databaseId=${id}`);
+      if (res.ok) {
+        const data: Snapshot[] = await res.json();
         setSnapshots(data);
         setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchSnapshots();
+        return data;
+      }
+    } catch (err) {
+      console.error('Failed to fetch snapshots', err);
+    }
+    setLoading(false);
+    return [];
   }, [id]);
 
   useEffect(() => {
-    // If a job was active and is no longer active, refresh the list
+    fetchSnapshots();
+  }, [fetchSnapshots]);
+
+  useEffect(() => {
+    // If a job was active and is no longer active, inspect result
     if (prevActiveJobRef.current && !activeJob) {
-       fetchSnapshots();
-       setMessage(prevActiveJobRef.current.jobType === 'BACKUP' ? 'Backup completed.' : 'Restore completed.');
-       setTimeout(() => setMessage(''), 5000);
+      const prevJob = prevActiveJobRef.current;
+
+      const handleJobOutcome = async () => {
+        const data = await fetchSnapshots();
+        const latest = data && data.length > 0 ? data[0] : null;
+
+        if (lastEvent && (lastEvent.status === 'FAILED' || lastEvent.status === 'TIMEOUT')) {
+          let trace = '';
+          if (latest && (latest.status === 'FAILED' || latest.status === 'TIMEOUT')) {
+            try {
+              const logRes = await apiFetch(`/api/snapshots/${latest.id}/log`);
+              if (logRes.ok) trace = await logRes.text();
+            } catch {
+              // ignore
+            }
+          }
+          const failureReason = lastEvent.message || 'Operation failed.';
+          setMessage(`${prevJob.jobType === 'RESTORE' ? 'Restore' : 'Backup'} failed: ${failureReason}`);
+          setJobFailure({
+            title: `${prevJob.jobType === 'RESTORE' ? 'Restore' : 'Backup'} Failed`,
+            reason: failureReason,
+            stacktrace: trace || failureReason,
+            snapshotId: latest?.id
+          });
+        } else if (latest && (latest.status === 'FAILED' || latest.status === 'TIMEOUT')) {
+          let trace = '';
+          try {
+            const logRes = await apiFetch(`/api/snapshots/${latest.id}/log`);
+            if (logRes.ok) trace = await logRes.text();
+          } catch {
+            // ignore
+          }
+          const firstLine = trace.split('\n')[0] || (latest.status === 'TIMEOUT' ? 'Operation timed out.' : 'Backup job failed.');
+          setMessage(`Backup failed: ${firstLine}`);
+          setJobFailure({
+            title: 'Backup Failed',
+            reason: firstLine,
+            stacktrace: trace,
+            snapshotId: latest.id
+          });
+        } else if (latest && latest.status === 'SKIPPED') {
+          setJobFailure(null);
+          setMessage('Backup skipped: Data checksum matches the latest snapshot.');
+          setTimeout(() => setMessage(''), 5000);
+        } else {
+          setJobFailure(null);
+          setMessage(`${prevJob.jobType === 'RESTORE' ? 'Restore' : 'Backup'} completed successfully!`);
+          setTimeout(() => setMessage(''), 5000);
+        }
+      };
+
+      handleJobOutcome();
     }
     prevActiveJobRef.current = activeJob;
-  }, [activeJob]);
+  }, [activeJob, lastEvent, fetchSnapshots]);
 
   const handleRestore = async (snapId: string) => {
     if (!confirm("CRITICAL WARNING: This will forcefully restore the database and replace all current data. Proceed?")) return;
     
+    setJobFailure(null);
     setRestoring(true);
     setMessage('Restoring... please wait. Do not close this page.');
     try {
@@ -61,27 +126,47 @@ export default function SnapshotBrowser() {
       if (res.ok && data.success) {
         setMessage('Restore completed successfully!');
       } else {
-        setMessage('Restore failed.');
+        const errorMsg = data.message || 'Restore failed.';
+        setMessage(`Restore failed: ${errorMsg}`);
+        setJobFailure({
+          title: 'Restore Failed',
+          reason: errorMsg,
+          snapshotId: snapId
+        });
       }
-    } catch (e) {
+    } catch {
       setMessage('Error during restore.');
+      setJobFailure({
+        title: 'Restore Failed',
+        reason: 'Network or server error during restore request.'
+      });
     } finally {
       setRestoring(false);
     }
   };
 
   const handleTakeSnapshot = async (force: boolean = false) => {
+    setJobFailure(null);
     setMessage(`Triggering snapshot${force ? ' (forced)' : ''}... please wait.`);
     try {
       const res = await apiFetch(`/api/databases/${id}/snapshot?force=${force}`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage('Snapshot triggered successfully! It will run in the background.');
+        setMessage('Snapshot triggered successfully! Running in the background...');
       } else {
-        setMessage('Failed to trigger snapshot.');
+        const errMsg = data.message || 'Failed to trigger snapshot.';
+        setMessage(`Failed to trigger snapshot: ${errMsg}`);
+        setJobFailure({
+          title: 'Snapshot Trigger Failed',
+          reason: errMsg
+        });
       }
-    } catch (e) {
+    } catch {
       setMessage('Error triggering snapshot.');
+      setJobFailure({
+        title: 'Snapshot Trigger Failed',
+        reason: 'Network or server communication error.'
+      });
     }
   };
 
@@ -97,7 +182,7 @@ export default function SnapshotBrowser() {
       } else {
         setSelectedLog('Failed to load logs.');
       }
-    } catch (e) {
+    } catch {
       setSelectedLog('Error loading logs.');
     } finally {
       setLogLoading(false);
@@ -140,9 +225,43 @@ export default function SnapshotBrowser() {
         <div className="badge warning" style={{ marginBottom: '2rem', display: 'flex', padding: '0.75rem 1rem', animation: 'pulse 2s infinite' }}>
           {activeMessage}
         </div>
-      ) : message && (
+      ) : message && !jobFailure && (
         <div className={`badge ${message.toLowerCase().includes('fail') || message.toLowerCase().includes('error') ? 'error' : 'success'}`} style={{ marginBottom: '2rem', display: 'flex', padding: '0.75rem 1rem' }}>
           {message}
+        </div>
+      )}
+
+      {jobFailure && (
+        <div className="card animate-fade-in" style={{ border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.08)', marginBottom: '2rem', padding: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span className="badge error">{jobFailure.title}</span>
+                <strong style={{ color: '#ef4444', fontSize: '0.95rem' }}>{jobFailure.reason}</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                The operation failed to complete. Error details and stacktrace are captured below:
+              </p>
+            </div>
+            <button onClick={() => setJobFailure(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '0.25rem' }} title="Dismiss">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          {jobFailure.stacktrace && (
+            <div style={{ marginTop: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Failure Reason & Stacktrace:</span>
+                {jobFailure.snapshotId && (
+                  <button className="button" onClick={() => handleViewLog(jobFailure.snapshotId!)} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
+                    Open Full Log
+                  </button>
+                )}
+              </div>
+              <pre style={{ maxHeight: '220px', overflowY: 'auto', background: 'rgba(0, 0, 0, 0.5)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem', borderRadius: '4px', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.8rem', color: '#fca5a5' }}>
+                {jobFailure.stacktrace}
+              </pre>
+            </div>
+          )}
         </div>
       )}
 
