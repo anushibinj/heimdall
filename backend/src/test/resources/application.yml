@@ -43,6 +43,7 @@ heimdall:
     process-timeout-minutes: 60
   storage:
     type: local
+    max-bytes-per-user: 10GB
     s3:
       endpoint: http://localhost:8333
       region: us-east-1

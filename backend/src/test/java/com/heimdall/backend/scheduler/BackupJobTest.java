@@ -48,6 +48,9 @@ public class BackupJobTest {
     private com.heimdall.backend.service.storage.StorageService storageService;
 
     @Mock
+    private com.heimdall.backend.service.storage.StorageQuotaService storageQuotaService;
+
+    @Mock
     private JobExecutionContext context;
 
     @Mock
@@ -119,6 +122,7 @@ public class BackupJobTest {
         
         verify(provider).waitForZeroConnections(db, 300000L);
         verify(provider).executeBackup(eq(db), anyString());
+        verify(storageQuotaService).assertCanStore(eq(db), anyLong());
         
         ArgumentCaptor<Snapshot> captor = ArgumentCaptor.forClass(Snapshot.class);
         verify(snapshotRepository).save(captor.capture());
@@ -154,5 +158,23 @@ public class BackupJobTest {
         ArgumentCaptor<Snapshot> captor = ArgumentCaptor.forClass(Snapshot.class);
         verify(snapshotRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo("TIMEOUT");
+    }
+
+    @Test
+    void testBackupFailsWhenStorageQuotaExceeded() throws Exception {
+        when(provider.calculateDataChecksum(db)).thenReturn("hash456");
+        when(snapshotRepository.findFirstByTargetDatabaseIdOrderByCreatedAtDesc(dbId)).thenReturn(null);
+        doThrow(new com.heimdall.backend.service.storage.StorageQuotaExceededException("Storage quota exceeded"))
+                .when(storageQuotaService).assertCanStore(eq(db), anyLong());
+
+        JobExecutionException exception = assertThrows(JobExecutionException.class, () -> backupJob.execute(context));
+        assertThat(exception.getMessage()).contains("Backup failed for database");
+
+        verify(storageService, never()).uploadFile(anyString(), any(File.class));
+
+        ArgumentCaptor<Snapshot> captor = ArgumentCaptor.forClass(Snapshot.class);
+        verify(snapshotRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo("FAILED");
+        assertThat(captor.getValue().getLogOutput()).contains("Storage quota exceeded");
     }
 }

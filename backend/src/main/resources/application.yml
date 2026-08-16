@@ -43,6 +43,8 @@ heimdall:
     process-timeout-minutes: 60
   storage:
     type: ${HEIMDALL_STORAGE_TYPE:s3}
+    # Per-user cap on stored backup size. Set to 0 to disable. Accepts units such as 10GB, 512MB.
+    max-bytes-per-user: ${HEIMDALL_STORAGE_MAX_BYTES_PER_USER:0}
     s3:
       endpoint: ${HEIMDALL_S3_ENDPOINT:http://localhost:8333}
       region: ${HEIMDALL_S3_REGION:us-east-1}

@@ -98,6 +98,7 @@ The application can be configured using environment variables (see [.env.example
 | `HEIMDALL_ALLOWED_DOMAINS` | Allowed Google domains (comma-separated, empty allows all) | *(empty)* |
 | `HEIMDALL_SECRET_KEY` | AES encryption key for stored database passwords | `ThisIsADefaultSecretKeyForDevEnv` |
 | `HEIMDALL_STORAGE_TYPE` | Storage type (`s3` or `local`) | `s3` |
+| `HEIMDALL_STORAGE_MAX_BYTES_PER_USER` | Hard limit on stored backup size per user (`0` disables) | `10GB` |
 | `HEIMDALL_S3_ENDPOINT` | S3 API endpoint URL (for SeaweedFS or custom S3) | `http://localhost:8333` |
 | `HEIMDALL_S3_REGION` | S3 Region | `us-east-1` |
 | `HEIMDALL_S3_BUCKET_NAME` | S3 Bucket name for backups | `heimdall-backups` |

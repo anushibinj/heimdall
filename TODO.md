@@ -10,7 +10,7 @@
 - [x] In the snapshot history in the frontend, also add a button to show the detailed log of why a snapshot failed or got skipped. Even in the case of a successful backup, store the log of the STDOUT for future reference.
 - [x] Add edit option to existing backup job config so that we can update IP/username/password, etc.
 - [ ] Make the Docker build / compose use the host machine's gradle cache
-- [ ] Add RBAC (Role Based Access Control) to the application. Use OAuth based authentication (using Google Sign In). Add different roles like Admin, Editor, Viewer, etc.
+- [x] Add RBAC (Role Based Access Control) to the application. Use OAuth based authentication (using Google Sign In). Add different roles like Admin, Editor, Viewer, etc.
 - [x] Instead of cron expressions in the frontend to schedule the backup jobs, implement user friendly frequency picker. Use 'Every 15 minutes', 'Every 30 minutes', 'Every hour', 'Every 4 hours', 'Every day', 'Every week', 'Every month', 'Custom'.
 - [ ] Add a back button in the "Add Database" screen to redirect to the dashboard.
 - [ ] Currently, most of the business logic is written in the controllers. Rip all of them off and move them to the service layer instead.
@@ -24,7 +24,7 @@
 - [x] Remove all hardcoded values for the frontend URLs in the spring boot code. Accept that value via a property in application.yml.
 - [x] CORS config properties for allowed origins, etc should be accepted as a application.yml property (comma separated).
 - [x] Add support for S3 to store the backups of databases. Use SeaweedFS to simulate S3 backup locally. Store the required configuration values in application.yml. Note that the code should be written to handle AWS S3 as well. But should work seamlessly even with SeaweedFS locally (no need to use AWS SDK).
-- [ ] Add a hard limit on the size of data a user can store in the S3 bucket per user. This can be done via a property in application.yml.
+- [x] Add a hard limit on the size of data a user can store in the S3 bucket per user. This can be done via a property in application.yml.
 - [x] If a backup job fails, don't show in the frontend that the job succeeded. As of now, even when a S3 backup job failed, I see a success message in the frontend. Instead, it should show the failure message and reason and stacktrace.
 - [ ] Stacktraces should be visible only to ADMIN users. Viewers should see a generic "Contact Admin for help" kinda message.
 - [ ] The spring boot app should not be running 24x7. It should come alive only when a scheduled job needs to be triggered, then do the job, and then shut itself down on the cloud. This should be done in the most cost efficient way. Since we are paying for every second the server is running on the cloud.

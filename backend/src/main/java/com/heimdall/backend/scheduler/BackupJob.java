@@ -39,6 +39,9 @@ public class BackupJob implements Job {
     private com.heimdall.backend.service.storage.StorageService storageService;
 
     @Autowired
+    private com.heimdall.backend.service.storage.StorageQuotaService storageQuotaService;
+
+    @Autowired
     private List<DatabaseProvider> providers;
 
     @Value("${heimdall.backup.timeout-millis:300000}")
@@ -104,6 +107,8 @@ public class BackupJob implements Job {
             String backupFilePath = backupFile.getAbsolutePath();
 
             String logOutput = provider.executeBackup(db, backupFilePath);
+
+            storageQuotaService.assertCanStore(db, backupFile.length());
 
             // Upload backup file to storage (S3 / Local)
             String storageKey = "databases/" + db.getId().toString() + "/" + fileName;

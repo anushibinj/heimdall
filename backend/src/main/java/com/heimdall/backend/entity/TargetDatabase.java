@@ -2,6 +2,7 @@ package com.heimdall.backend.entity;
 
 import jakarta.persistence.*;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
@@ -37,6 +38,11 @@ public class TargetDatabase {
 
     @Column(name = "cron_schedule", nullable = false)
     private String cronSchedule;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "created_by_user_id")
+    private User createdBy;
 
     // Getters and Setters
 
@@ -110,5 +116,13 @@ public class TargetDatabase {
 
     public void setCronSchedule(String cronSchedule) {
         this.cronSchedule = cronSchedule;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 }

@@ -1,11 +1,15 @@
 package com.heimdall.backend.controller;
 
 import com.heimdall.backend.entity.TargetDatabase;
+import com.heimdall.backend.entity.User;
 import com.heimdall.backend.provider.DatabaseProvider;
 import com.heimdall.backend.repository.TargetDatabaseRepository;
 import com.heimdall.backend.scheduler.DatabaseSchedulingService;
+import com.heimdall.backend.security.CustomOAuth2User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +45,10 @@ public class TargetDatabaseController {
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<?> createDatabase(@RequestBody TargetDatabase database) {
         try {
+            User currentUser = resolveCurrentUser();
+            if (currentUser != null) {
+                database.setCreatedBy(currentUser);
+            }
             TargetDatabase saved = repository.save(database);
             schedulingService.scheduleDatabaseBackup(saved);
             return ResponseEntity.ok(saved);
@@ -167,5 +175,20 @@ public class TargetDatabaseController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("{\"success\":false, \"message\":\"" + e.getMessage() + "\"}");
         }
+    }
+
+    private User resolveCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User user) {
+            return user;
+        }
+        if (principal instanceof CustomOAuth2User oauthUser) {
+            return oauthUser.getUser();
+        }
+        return null;
     }
 }
