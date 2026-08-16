@@ -28,6 +28,12 @@ describe('AddDatabase', () => {
     expect(screen.getByText(/test connection/i)).toBeInTheDocument();
   });
 
+  it('links back to the dashboard', () => {
+    render(<BrowserRouter><AddDatabase /></BrowserRouter>);
+    const backLink = screen.getByRole('link', { name: /back to dashboard/i });
+    expect(backLink).toHaveAttribute('href', '/');
+  });
+
   it('handles connection test', async () => {
     (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
