@@ -27,3 +27,4 @@
 - [ ] Add a hard limit on the size of data a user can store in the S3 bucket per user. This can be done via a property in application.yml.
 - [x] If a backup job fails, don't show in the frontend that the job succeeded. As of now, even when a S3 backup job failed, I see a success message in the frontend. Instead, it should show the failure message and reason and stacktrace.
 - [ ] Stacktraces should be visible only to ADMIN users. Viewers should see a generic "Contact Admin for help" kinda message.
+- [ ] The spring boot app should not be running 24x7. It should come alive only when a scheduled job needs to be triggered, then do the job, and then shut itself down on the cloud. This should be done in the most cost efficient way. Since we are paying for every second the server is running on the cloud.
